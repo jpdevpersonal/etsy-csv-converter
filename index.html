@@ -1,0 +1,677 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Roboto:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <title>Etsy Monthly Accounts Cleaner | SimpleBizToolkit</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a href="#" class="site-brand" aria-label="SimpleBizToolkit home">
+        <span class="site-brand-icon" aria-hidden="true">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M3 3h7v7H3z" />
+            <path d="M14 3h7v7h-7z" />
+            <path d="M3 14h7v7H3z" />
+            <path d="M17.5 14v7" />
+            <path d="M14 17.5h7" />
+          </svg>
+        </span>
+        SimpleBizToolkit
+      </a>
+      <span class="site-privacy-badge">
+        <svg
+          width="13"
+          height="13"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        </svg>
+        Your data stays on your device
+      </span>
+    </header>
+
+    <main>
+      <div
+        id="statusMessage"
+        class="status"
+        role="alert"
+        aria-live="polite"
+      ></div>
+
+      <!-- ============================================================
+           Hero
+           ============================================================ -->
+      <section class="hero" aria-label="Tool introduction">
+        <div class="hero-copy">
+          <span class="eyebrow">Free tool for Etsy sellers</span>
+          <h1>Turn Your Etsy CSV Into a Clean Monthly Report</h1>
+          <p class="intro">
+            Upload your Etsy payment CSV, and we turn it into a tidy
+            month-by-month breakdown &mdash; ready to share with your accountant
+            or add straight to your books.
+          </p>
+          <div class="hero-benefits">
+            <span class="hero-benefit">
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              No sign-up needed
+            </span>
+            <span class="hero-benefit">
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              Works in your browser
+            </span>
+            <span class="hero-benefit">
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              Download as Excel or CSV
+            </span>
+            <span class="hero-benefit">
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              Up to 13 files at once
+            </span>
+          </div>
+        </div>
+        <aside class="hero-note" aria-label="How it works">
+          <strong class="hero-note-title">How it works</strong>
+          <p>
+            1. Go to Etsy &rarr; Shop Manager &rarr; Finances &rarr; Payment
+            Account &rarr; Download CSV.
+          </p>
+          <p>2. Drop that file into the tool below.</p>
+          <p>3. Download your clean monthly accounts spreadsheet.</p>
+          <div class="privacy">
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+            100% private &mdash; your CSV is processed in your browser and is
+            never sent anywhere.
+          </div>
+        </aside>
+      </section>
+
+      <!-- ============================================================
+           Progress tracker
+           ============================================================ -->
+      <nav class="progress-tracker" aria-label="Steps">
+        <div id="wizardStepUpload" class="progress-step is-active">
+          <div class="progress-badge" aria-hidden="true">
+            <span class="progress-step-number">1</span>
+            <svg
+              class="progress-check-icon"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="3"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          </div>
+          <div class="progress-info">
+            <span class="progress-label">Step 1</span>
+            <strong class="progress-title">Upload Files</strong>
+          </div>
+        </div>
+        <div class="progress-connector" aria-hidden="true"></div>
+        <div id="wizardStepMapping" class="progress-step">
+          <div class="progress-badge" aria-hidden="true">
+            <span class="progress-step-number">2</span>
+            <svg
+              class="progress-check-icon"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="3"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          </div>
+          <div class="progress-info">
+            <span class="progress-label">Step 2</span>
+            <strong class="progress-title">Check Columns</strong>
+          </div>
+        </div>
+        <div class="progress-connector" aria-hidden="true"></div>
+        <div id="wizardStepSummary" class="progress-step">
+          <div class="progress-badge" aria-hidden="true">
+            <span class="progress-step-number">3</span>
+            <svg
+              class="progress-check-icon"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="3"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          </div>
+          <div class="progress-info">
+            <span class="progress-label">Step 3</span>
+            <strong class="progress-title">Download Report</strong>
+          </div>
+        </div>
+      </nav>
+
+      <div class="tool-grid">
+        <!-- ============================================================
+             Step 1: Upload
+             ============================================================ -->
+        <section class="card" id="uploadCard" aria-labelledby="upload-heading">
+          <div class="card-header">
+            <div class="step-tag">
+              <span class="step-badge" aria-hidden="true">1</span>
+              Step 1 of 3
+            </div>
+            <h2 id="upload-heading">Upload your Etsy CSV files</h2>
+            <p class="helper">
+              Export your CSV from Etsy &rarr; Shop Manager &rarr; Finances
+              &rarr; Payment Account &rarr; Download CSV. Then drop it here, or
+              click
+              <strong>Browse for file</strong>.
+            </p>
+          </div>
+
+          <div
+            id="uploadSectionStatus"
+            class="status status-inline"
+            role="alert"
+            aria-live="polite"
+          ></div>
+
+          <!-- Optional company name -->
+          <div class="company-panel">
+            <div class="company-panel-header">
+              <span class="company-panel-title">Company or shop name</span>
+              <span class="optional-badge">Optional</span>
+            </div>
+            <p class="helper">
+              If added, this appears at the top of your downloaded spreadsheet.
+            </p>
+            <input
+              id="companyNameInput"
+              type="text"
+              maxlength="120"
+              placeholder="e.g. My Etsy Shop Ltd"
+              aria-label="Company or shop name (optional)"
+            />
+          </div>
+
+          <!-- Drop zone -->
+          <div
+            id="uploadShell"
+            class="upload-zone"
+            role="button"
+            tabindex="0"
+            aria-label="Drop zone — click or drag to upload CSV files"
+          >
+            <div class="upload-zone-icon" aria-hidden="true">
+              <svg
+                width="28"
+                height="28"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+            </div>
+            <p class="upload-zone-title">Drop your Etsy CSV file here</p>
+            <p class="upload-zone-or">or</p>
+            <div class="upload-zone-actions">
+              <button
+                type="button"
+                id="uploadButton"
+                class="button button-primary"
+              >
+                Browse for file
+              </button>
+              <span id="fileCount" class="file-count-pill" aria-live="polite"
+                >0 of 13 files</span
+              >
+            </div>
+            <p class="upload-zone-hint">
+              Accepts .csv files &bull; Up to 13 files at once for multi-period
+              reports
+            </p>
+            <input
+              id="csvInput"
+              type="file"
+              accept=".csv,text/csv"
+              multiple
+              class="hidden"
+              aria-hidden="true"
+              tabindex="-1"
+            />
+            <div
+              id="uploadedFilesWrap"
+              class="uploaded-files-area hidden"
+              aria-live="polite"
+            >
+              <div class="uploaded-files-area-header">
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                Files ready to process
+              </div>
+              <ul id="uploadedFilesList" class="upload-list"></ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================
+             Step 2: Column mapping
+             ============================================================ -->
+        <section
+          class="card hidden"
+          id="mappingSection"
+          aria-labelledby="mapping-heading"
+        >
+          <div class="card-header">
+            <div class="step-tag">
+              <span class="step-badge" aria-hidden="true">2</span>
+              Step 2 of 3
+            </div>
+            <h2 id="mapping-heading">Check your columns match</h2>
+            <p class="helper">
+              We've automatically matched your CSV columns. Have a quick look to
+              make sure everything looks right before creating your summary.
+              Required fields are marked with <strong>*</strong>.
+            </p>
+          </div>
+
+          <div
+            id="mappingSectionStatus"
+            class="status status-inline"
+            role="alert"
+            aria-live="polite"
+          ></div>
+
+          <div
+            id="mappingLockBanner"
+            class="mapping-lock-banner hidden"
+            role="status"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+            Column matching is locked. Click <strong>Edit Columns</strong> below
+            to make changes.
+          </div>
+
+          <div class="mapping-grid" id="mappingGrid"></div>
+
+          <div id="processCard" class="hidden" style="margin-top: 2rem">
+            <h3 id="process-heading" style="margin-bottom: 0.4rem">
+              Ready to create your summary?
+            </h3>
+            <p class="helper" style="margin-bottom: 1rem">
+              Click below to generate your clean monthly report from the
+              uploaded files.
+            </p>
+            <div class="process-row">
+              <button
+                type="button"
+                id="processButton"
+                class="button button-primary"
+                disabled
+              >
+                Create Monthly Summary &rarr;
+              </button>
+              <span id="processHelper" class="helper"
+                >Add at least one file to continue.</span
+              >
+              <button
+                type="button"
+                id="editMappingsButton"
+                class="button button-secondary hidden"
+              >
+                Edit Columns
+              </button>
+              <button
+                type="button"
+                id="cancelButton"
+                class="button button-secondary"
+              >
+                Start Over
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================
+             Step 3: Summary and download
+             ============================================================ -->
+        <section
+          class="card hidden"
+          id="summarySection"
+          aria-labelledby="summary-heading"
+        >
+          <div class="card-header">
+            <div class="step-tag">
+              <span class="step-badge" aria-hidden="true">3</span>
+              Step 3 of 3
+            </div>
+            <h2 id="summary-heading">Your monthly report is ready</h2>
+            <p class="helper">
+              Review your figures below. Optionally add any extra monthly costs,
+              then download your clean spreadsheet.
+            </p>
+          </div>
+
+          <div
+            id="summarySectionStatus"
+            class="status status-inline"
+            role="alert"
+            aria-live="polite"
+          ></div>
+
+          <div class="summary-layout">
+            <!-- Optional extra costs (collapsible) -->
+            <div class="extra-costs-panel" id="extraCostsPanel">
+              <div
+                class="extra-costs-header"
+                id="extraCostsToggle"
+                role="button"
+                aria-expanded="false"
+                aria-controls="extraCostsBody"
+                tabindex="0"
+              >
+                <div class="extra-costs-title-group">
+                  <div class="extra-costs-title">Add extra monthly costs</div>
+                  <div class="extra-costs-subtitle">
+                    Optional &mdash; packaging, ads, subscriptions &amp; more
+                  </div>
+                </div>
+                <svg
+                  class="extra-costs-toggle-icon"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </div>
+              <div class="extra-costs-body" id="extraCostsBody">
+                <p class="helper">
+                  Enter any extra business costs for each month. These are
+                  deducted from your Net Received to calculate Estimated Profit.
+                </p>
+                <div class="table-wrap cost-table">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Month</th>
+                        <th>Packaging</th>
+                        <th>Shipping Supplies</th>
+                        <th>Ads</th>
+                        <th>Subscriptions</th>
+                        <th>Other Costs</th>
+                      </tr>
+                    </thead>
+                    <tbody id="costTableBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Summary table -->
+            <div>
+              <div class="summary-table-header">
+                <h3>Your clean monthly accounts</h3>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Month</th>
+                      <th>Revenue</th>
+                      <th>Etsy Fees</th>
+                      <th>Refunds</th>
+                      <th>Adjustments</th>
+                      <th>Net Received</th>
+                      <th>Extra Costs</th>
+                      <th>Estimated Profit</th>
+                    </tr>
+                  </thead>
+                  <tbody id="summaryTableBody"></tbody>
+                  <tfoot id="summaryTableFoot"></tfoot>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Download panel -->
+          <div class="download-panel">
+            <div class="download-panel-title">
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              Download your report
+            </div>
+            <p class="download-hint">
+              Choose your preferred format. Excel formats (XLS and XLSX) include
+              your company name and colour styling.
+            </p>
+            <div class="download-formats">
+              <button
+                type="button"
+                id="downloadCsvButton"
+                class="button button-primary"
+              >
+                Save as CSV
+              </button>
+              <button
+                type="button"
+                id="downloadXlsButton"
+                class="button button-primary"
+              >
+                Save as XLS
+              </button>
+              <button
+                type="button"
+                id="downloadXlsxButton"
+                class="button button-primary"
+              >
+                Save as XLSX
+              </button>
+            </div>
+            <div
+              id="downloadReadyMessage"
+              class="status status-inline"
+              role="alert"
+              aria-live="polite"
+            ></div>
+            <div class="secondary-actions">
+              <button
+                type="button"
+                id="submitAnotherButton"
+                class="button button-secondary hidden"
+              >
+                Process another file &rarr;
+              </button>
+            </div>
+          </div>
+
+          <p class="disclaimer">
+            <strong>Please note:</strong> This tool provides a simplified
+            summary for reference only. It is not a substitute for professional
+            accounting advice. Always verify your figures with a qualified
+            accountant, and check your report before use as Etsy's CSV format
+            can vary.
+          </p>
+        </section>
+      </div>
+
+      <!-- ============================================================
+           Promo
+           ============================================================ -->
+      <section class="promo" aria-label="More tools">
+        <div>
+          <h2>More free tools at SimpleBizToolkit.com</h2>
+          <div class="promoPadding">
+            SimpleBizToolkit.com offers simple convenient templates and free,
+            browser-based tools built for small business owners. No account, no
+            subscription, just practical tools that work.
+          </div>
+          <a
+            class="button button-primary"
+            href="[AFFILIATE_OR_PRODUCT_LINK_HERE]"
+            style="
+              display: inline-flex;
+              margin-top: 0.75rem;
+              border-radius: 999px;
+            "
+          >
+            View Monthly Accounting Ledger &rarr;
+          </a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>
+        &copy; <a href="https://simplebiztools.com">SimpleBizToolkit.com</a>
+        &mdash; Free tools for small business owners &mdash; Your data never
+        leaves your browser
+      </p>
+    </footer>
+
+    <script src="app.js" defer></script>
+  </body>
+</html>
