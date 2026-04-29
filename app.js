@@ -213,7 +213,7 @@ cancelButton.addEventListener("click", resetToolState);
 // Process / create summary
 processButton.addEventListener("click", () => {
   if (!state.uploadedFiles.length) {
-    announce("upload", "Please upload at least one Etsy CSV before creating the monthly summary.", "error");
+    announce("upload", "Choose at least one Etsy CSV before generating your profit breakdown.", "error");
     return;
   }
 
@@ -227,7 +227,7 @@ processButton.addEventListener("click", () => {
     .map((field) => field.label.replace(" column", ""));
 
   if (missingRequired.length) {
-    announce("mapping", "Please choose Date, Transaction type, and Amount before continuing.", "error");
+    announce("mapping", "Choose Date, Transaction type, and Amount before generating your report.", "error");
     return;
   }
 
@@ -246,7 +246,7 @@ processButton.addEventListener("click", () => {
   refreshMappingValidationState();
   clearSectionStatus("upload");
 
-  announce("summary", "Your monthly summary is ready. Add any extra costs below, or go straight to downloading.", "success");
+  announce("summary", "Your profit breakdown is ready. Add extra costs if you want, or download your report now.", "success");
   clearDownloadReadyMessage();
   state.hasDownloadedFile = false;
   submitAnotherButton.classList.add("hidden");
@@ -257,7 +257,7 @@ processButton.addEventListener("click", () => {
 // Download buttons
 downloadCsvButton.addEventListener("click", () => {
   if (!state.summaryRows.length) {
-    announce("summary", "Create your monthly summary before downloading.", "error");
+    announce("summary", "Generate your report before downloading.", "error");
     return;
   }
   downloadFile(convertSummaryToCsv(getExportRows()), buildDownloadName("csv"), "text/csv;charset=utf-8;");
@@ -266,7 +266,7 @@ downloadCsvButton.addEventListener("click", () => {
 
 downloadXlsButton.addEventListener("click", () => {
   if (!state.summaryRows.length) {
-    announce("summary", "Create your monthly summary before downloading.", "error");
+    announce("summary", "Generate your report before downloading.", "error");
     return;
   }
   downloadFile(createXlsWorkbookXml(getExportRows()), buildDownloadName("xls"), "application/vnd.ms-excel;charset=utf-8;");
@@ -275,7 +275,7 @@ downloadXlsButton.addEventListener("click", () => {
 
 downloadXlsxButton.addEventListener("click", () => {
   if (!state.summaryRows.length) {
-    announce("summary", "Create your monthly summary before downloading.", "error");
+    announce("summary", "Generate your report before downloading.", "error");
     return;
   }
   downloadFile(
@@ -341,7 +341,7 @@ function clearDownloadReadyMessage() {
 function handleSuccessfulDownload() {
   state.hasDownloadedFile = true;
   submitAnotherButton.classList.remove("hidden");
-  setDownloadReadyMessage("Your file downloaded successfully. Check your Downloads folder.", "success");
+  setDownloadReadyMessage("Your report has been downloaded. Check your Downloads folder.", "success");
 }
 
 /** Smooth-scroll a section element into view. */
@@ -427,7 +427,7 @@ function formatMismatchMessage(mismatches) {
 /** Read, validate, and queue a single CSV file. */
 async function handleFile(file) {
   if (state.uploadedFiles.length >= MAX_FILE_COUNT) {
-    announce("upload", `You can add up to ${MAX_FILE_COUNT} CSV files. Remove some or process these first.`, "warning");
+    announce("upload", `You can add up to ${MAX_FILE_COUNT} CSV files. Remove some or generate a report first.`, "warning");
     return;
   }
 
@@ -475,7 +475,7 @@ async function handleFile(file) {
 
     focusSection(mappingSection);
   } catch {
-    announce("upload", "We could not read that CSV file. Please try again with a standard Etsy export.", "error");
+    announce("upload", "We could not read that CSV. Please try again with a standard Etsy export.", "error");
   }
 }
 
@@ -487,7 +487,7 @@ async function handleSelectedFiles(fileList) {
   const availableSlots = Math.max(MAX_FILE_COUNT - state.uploadedFiles.length, 0);
 
   if (!availableSlots) {
-    announce("upload", `You already have ${MAX_FILE_COUNT} files queued. Remove some before adding more.`, "warning");
+    announce("upload", `You already have ${MAX_FILE_COUNT} CSVs selected. Remove some before adding more.`, "warning");
     return;
   }
 
@@ -508,7 +508,7 @@ async function handleSelectedFiles(fileList) {
 
 /** Update the file count pill and the uploaded files list. */
 function updateUploadedFilesDisplay() {
-  fileCount.textContent = `${state.uploadedFiles.length} of ${MAX_FILE_COUNT} files`;
+  fileCount.textContent = `${state.uploadedFiles.length} of ${MAX_FILE_COUNT} CSVs`;
 
   uploadedFilesList.innerHTML = "";
   state.uploadedFiles.forEach((file, index) => {
@@ -526,8 +526,8 @@ function updateProcessButtonState() {
   const hasFiles = state.uploadedFiles.length > 0;
   processButton.disabled = !hasFiles || state.mappingLocked;
   processHelper.textContent = hasFiles
-    ? "Required columns are Date, Transaction type, and Amount. Review the matches, then create the summary."
-    : "Add at least one file to continue.";
+    ? "Required columns are Date, Transaction type, and Amount. Review the matches, then generate your report."
+    : "Choose at least one CSV to continue.";
 }
 
 /* =================================================================
@@ -675,7 +675,7 @@ function refreshMappingValidationState(options = {}) {
   if (!hasFiles) {
     clearSectionStatus("mapping");
     processButton.disabled = true;
-    processHelper.textContent = "Add at least one file to continue.";
+    processHelper.textContent = "Choose at least one CSV to continue.";
     editMappingsButton.classList.add("hidden");
     if (mappingLockBanner) mappingLockBanner.classList.add("hidden");
     mappingGrid.classList.add("hidden");
@@ -697,8 +697,8 @@ function refreshMappingValidationState(options = {}) {
     announce("mapping", validation.message, "error");
     processButton.disabled = true;
     processHelper.textContent = validation.type === "mismatch"
-      ? "Fix the column mismatch before continuing."
-      : "Choose Date, Transaction type, and Amount before continuing.";
+      ? "Fix the column mismatch before generating your report."
+      : "Choose Date, Transaction type, and Amount to continue.";
     mappingGrid.classList.remove("hidden");
     processCard.classList.remove("hidden");
     if (mappingLockBanner && state.mappingLocked) mappingLockBanner.classList.remove("hidden");
@@ -727,7 +727,7 @@ function getMappingValidationResult(mappings) {
     return {
       ok: false,
       type: "required",
-      message: "Please choose Date, Transaction type, and Amount before continuing.",
+      message: "Choose Date, Transaction type, and Amount before generating your report.",
     };
   }
 
@@ -755,7 +755,7 @@ function getMappingValidationResult(mappings) {
     type: "ok",
     message: state.mappingLocked
       ? "All columns matched. This step is complete."
-      : "All columns matched across the uploaded files. No need to do anything here.",
+      : "All columns matched. You can generate your report whenever you're ready.",
   };
 }
 
@@ -1219,43 +1219,41 @@ function handleCostInput(event) {
   renderSummaryTable();
 }
 
+function appendSummaryCell(rowElement, text, className = "") {
+  const cell = document.createElement("td");
+  if (className) cell.className = className;
+  cell.textContent = text;
+  rowElement.appendChild(cell);
+}
+
+function appendSummaryRow(container, row) {
+  const tr = document.createElement("tr");
+  appendSummaryCell(tr, row.month, "month-cell");
+  appendSummaryCell(tr, formatCurrency(row.revenue));
+  appendSummaryCell(tr, formatCurrency(row.fees));
+  appendSummaryCell(tr, formatCurrency(row.refunds));
+  appendSummaryCell(tr, formatCurrency(row.adjustments));
+  appendSummaryCell(tr, formatCurrency(row.netReceived));
+  appendSummaryCell(tr, formatCurrency(row.extraCosts));
+  appendSummaryCell(tr, formatCurrency(row.estimatedProfit));
+  container.appendChild(tr);
+}
+
 /** Render the monthly accounts summary table with current extra cost figures. */
 function renderSummaryTable() {
-  summaryTableBody.innerHTML = "";
-  summaryTableFoot.innerHTML = "";
+  summaryTableBody.replaceChildren();
+  summaryTableFoot.replaceChildren();
 
   const rows = getSummaryWithCosts();
 
   rows.forEach((row) => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td class="month-cell">${row.month}</td>
-      <td>${formatCurrency(row.revenue)}</td>
-      <td>${formatCurrency(row.fees)}</td>
-      <td>${formatCurrency(row.refunds)}</td>
-      <td>${formatCurrency(row.adjustments)}</td>
-      <td>${formatCurrency(row.netReceived)}</td>
-      <td>${formatCurrency(row.extraCosts)}</td>
-      <td>${formatCurrency(row.estimatedProfit)}</td>
-    `;
-    summaryTableBody.appendChild(tr);
+    appendSummaryRow(summaryTableBody, row);
   });
 
   if (!rows.length) return;
 
   const totals  = calculateSummaryTotals(rows);
-  const totalTr = document.createElement("tr");
-  totalTr.innerHTML = `
-    <td class="month-cell">${totals.month}</td>
-    <td>${formatCurrency(totals.revenue)}</td>
-    <td>${formatCurrency(totals.fees)}</td>
-    <td>${formatCurrency(totals.refunds)}</td>
-    <td>${formatCurrency(totals.adjustments)}</td>
-    <td>${formatCurrency(totals.netReceived)}</td>
-    <td>${formatCurrency(totals.extraCosts)}</td>
-    <td>${formatCurrency(totals.estimatedProfit)}</td>
-  `;
-  summaryTableFoot.appendChild(totalTr);
+  appendSummaryRow(summaryTableFoot, totals);
 }
 
 function getSummaryWithCosts() {
@@ -1848,6 +1846,25 @@ function crc32(bytes) {
 /* =================================================================
    14. Initialise
    ================================================================= */
+
+// Wipe in-memory CSV data when the user navigates away or closes the tab.
+// pagehide fires reliably on page unload; visibilitychange covers tab switches
+// that precede a close, ensuring the GC can reclaim data promptly.
+window.addEventListener("pagehide", () => {
+  state.uploadedFiles = [];
+  state.combinedHeaders = [];
+  state.summaryRows = [];
+  state.extraCosts = {};
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden") {
+    state.uploadedFiles = [];
+    state.combinedHeaders = [];
+    state.summaryRows = [];
+    state.extraCosts = {};
+  }
+});
 
 updateUploadedFilesDisplay();
 updateProcessButtonState();
