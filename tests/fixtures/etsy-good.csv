@@ -1,0 +1,15 @@
+Date,Type,Title,Info,Currency,Amount,Fees & Taxes,Net,Tax Details
+30-Apr-25,VAT,VAT: auto-renew expired,auto-renew expired: 1384315830,GBP,--,-£0.03,-£0.03,--
+30-Apr-25,Fee,Listing fee ($0.20 USD),Listing #1384315830,GBP,--,-£0.15,-£0.15,--
+30-Apr-25,VAT,VAT: Processing Fee,Order #3672216433,GBP,--,-£0.05,-£0.05,--
+,VAT,VAT: Offsite Ads fee,order: 3672216433,,--,,-£0.04,--
+30-Apr-25,VAT,VAT: transaction,transaction: 4563772122,GBP,--,-£0.02,-£0.02,--
+30-Apr-25,Marketing,Fee for sale made through Offsite Ads,Order #3672216433,GBP,--,-£0.21,-£0.21,--
+30-Apr-25,Fee,Transaction fee: Printable Accounting Ledger General Ledg...,Order #3672216433,GBP,--,-£0.09,-£0.09,--
+30-Apr-25,Fee,Processing fee,Order #3672216433,GBP,--,-£0.25,-£0.25,--
+30-Apr-25,Sale,Payment for Order #3672216433,,GBP,£1.37,--,£1.37,--
+30-Apr-25,VAT,VAT: auto-renew sold,auto-renew sold : 1194290286,GBP,--,-£0.03,-£0.03,--
+30-Apr-25,Fee,Listing fee ($0.20 USD),Listing #1194290286,GBP,--,-£0.15,-£0.15,--
+30-Apr-25,VAT,VAT: Processing Fee,Order #3671998175,GBP,--,-£0.05,-£0.05,--
+30-Apr-25,VAT,VAT: transaction,transaction: 4563505060,GBP,--,-£0.02,-£0.02,--
+30-Apr-25,Fee,"Transaction fee: Printable Employee Time Sheet, Hours Wor...",Order #3671998175,GBP,--,-£0.09,-£0.09,--

@@ -131,7 +131,6 @@
       </a>
       <span class="site-privacy-badge">
         <svg
-                  "text": "No. Your CSV file is processed locally on your own device and is not uploaded for conversion. If the published page includes Google Ads or similar third-party services, those providers may still receive standard page request and browser data, but not your CSV contents."
           height="13"
           viewBox="0 0 24 24"
           fill="none"
@@ -274,16 +273,16 @@
             <h3>Why Etsy CSV Files Are Hard to Use</h3>
             <p>
               Etsy exports give you raw rows of sales, fees, refunds, and
-              adjustments mixed together. That makes it hard to see your
-              monthly totals or your real profit.
+              adjustments mixed together. That makes it hard to see your monthly
+              totals or your real profit.
             </p>
           </div>
           <div>
             <h3>Create Monthly Etsy Profit Reports in Seconds</h3>
             <p>
-              This tool groups your Etsy CSV by month, separates revenue,
-              fees, refunds, and adjustments, and lets you add extra costs.
-              Then you can download a clean CSV or Excel report.
+              This tool groups your Etsy CSV by month, separates revenue, fees,
+              refunds, and adjustments, and lets you add extra costs. Then you
+              can download a clean CSV or Excel report.
             </p>
           </div>
         </div>
@@ -504,7 +503,10 @@
               </svg>
               Processed locally in your browser — nothing is uploaded or stored
             </p>
-            <p class="upload-trust-secondary">For best practice, avoid including personal or sensitive information</p>
+            <p class="upload-trust-secondary">
+              For best practice, avoid including personal or sensitive
+              information
+            </p>
           </div>
         </section>
 
@@ -571,45 +573,44 @@
           </div>
 
           <div class="mapping-grid" id="mappingGrid"></div>
-
         </section>
 
         <div id="processCard" class="hidden">
-            <h3 id="process-heading" style="margin-bottom: 0.4rem">
-              Ready to generate your profit breakdown?
-            </h3>
-            <p class="helper" style="margin-bottom: 1rem">
-              Once you generate the breakdown you can still edit columns if
-              something looks off in the results.
-            </p>
-            <div class="process-row">
-              <button
-                type="button"
-                id="processButton"
-                class="button button-primary"
-                disabled
-              >
-                Generate Profit Breakdown &rarr;
-              </button>
-              <span id="processHelper" class="helper"
-                >Choose at least one CSV to continue.</span
-              >
-              <button
-                type="button"
-                id="editMappingsButton"
-                class="button button-secondary hidden"
-              >
-                Edit Columns
-              </button>
-              <button
-                type="button"
-                id="cancelButton"
-                class="button button-secondary"
-              >
-                Start Over
-              </button>
-            </div>
+          <h3 id="process-heading" style="margin-bottom: 0.4rem">
+            Ready to generate your profit breakdown?
+          </h3>
+          <p class="helper" style="margin-bottom: 1rem">
+            Once you generate the breakdown you can still edit columns if
+            something looks off in the results.
+          </p>
+          <div class="process-row">
+            <button
+              type="button"
+              id="processButton"
+              class="button button-primary"
+              disabled
+            >
+              Generate Profit Breakdown &rarr;
+            </button>
+            <span id="processHelper" class="helper"
+              >Choose at least one CSV to continue.</span
+            >
+            <button
+              type="button"
+              id="editMappingsButton"
+              class="button button-secondary hidden"
+            >
+              Edit Columns
+            </button>
+            <button
+              type="button"
+              id="cancelButton"
+              class="button button-secondary"
+            >
+              Start Over
+            </button>
           </div>
+        </div>
 
         <!-- ============================================================
              Step 3: Summary and download
@@ -626,8 +627,8 @@
             </div>
             <h2 id="summary-heading">Your profit breakdown is ready</h2>
             <p class="helper">
-              Review your figures below. Add extra costs if you want, then
-              save your report.
+              Review your figures below. Add extra costs if you want, then save
+              your report.
             </p>
           </div>
 
@@ -637,6 +638,16 @@
             role="alert"
             aria-live="polite"
           ></div>
+
+          <div class="secondary-actions">
+            <button
+              type="button"
+              id="summaryEditMappingsButton"
+              class="button button-secondary"
+            >
+              Edit Columns
+            </button>
+          </div>
 
           <div class="summary-layout">
             <!-- Optional extra costs (collapsible) -->
@@ -850,7 +861,13 @@
 
     <footer class="site-footer">
       <p>
-        &copy; <a href="https://simplebiztools.com" rel="noreferrer" referrerpolicy="no-referrer">SimpleBizToolkit.com</a>
+        &copy;
+        <a
+          href="https://simplebiztools.com"
+          rel="noreferrer"
+          referrerpolicy="no-referrer"
+          >SimpleBizToolkit.com</a
+        >
         Free tools for small business owners. Your CSV stays in your browser.
       </p>
       <p class="footer-disclaimer">

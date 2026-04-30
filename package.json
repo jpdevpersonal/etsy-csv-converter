@@ -1,0 +1,21 @@
+{
+  "name": "etsy-csv-converter",
+  "private": true,
+  "scripts": {
+    "test": "jest --runInBand",
+    "test:browser": "playwright test",
+    "test:all": "npm test && npm run test:browser"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.2",
+    "jest": "^30.0.5",
+    "jest-environment-jsdom": "^30.0.5",
+    "jsdom": "^26.1.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/tests/**/*.test.js"
+    ]
+  }
+}

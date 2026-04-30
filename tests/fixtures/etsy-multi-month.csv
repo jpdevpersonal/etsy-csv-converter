@@ -1,0 +1,9 @@
+Date,Type,Title,Info,Currency,Amount,Fees & Taxes,Net,Tax Details
+29-Feb-24,Sale,Payment for Order #1001,,GBP,£25.00,-£1.50,£23.50,--
+29-Feb-24,Fee,Processing fee,Order #1001,GBP,--,-£0.40,-£0.40,--
+29-Feb-24,Adjustment,Reserve release,Shop reserve,GBP,£3.00,--,£3.00,--
+03-Mar-24,Refund,Refund for Order #1001,,GBP,-£10.00,--,-£10.00,--
+05-Mar-24,Sale,Payment for Order #1002,,GBP,£12.50,-£0.75,£11.75,--
+06-Mar-24,Marketing,Fee for sale made through Offsite Ads,Order #1002,GBP,--,-£1.00,-£1.00,--
+07-Mar-24,Deposit,Daily payout,Transfer from Etsy balance £45.67,GBP,,,,--
+08-Mar-24,Adjustment,Manual correction,,GBP,-£2.00,--,-£2.00,--

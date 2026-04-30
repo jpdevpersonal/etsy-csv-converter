@@ -135,6 +135,7 @@ const cancelButton        = document.getElementById("cancelButton");
 
 const summarySection      = document.getElementById("summarySection");
 const summarySectionStatus = document.getElementById("summarySectionStatus");
+const summaryEditMappingsButton = document.getElementById("summaryEditMappingsButton");
 const extraCostsPanel     = document.getElementById("extraCostsPanel");
 const extraCostsToggle    = document.getElementById("extraCostsToggle");
 const costTableBody       = document.getElementById("costTableBody");
@@ -199,19 +200,43 @@ uploadShell.addEventListener("drop", async (event) => {
   await handleSelectedFiles(event.dataTransfer.files || []);
 });
 
-// Edit mappings button (unlock after summary is created)
-editMappingsButton.addEventListener("click", () => {
+uploadShell.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter" && event.key !== " " && event.key !== "Spacebar") return;
+
+  event.preventDefault();
+  csvInput.click();
+});
+
+function enterMappingEditMode() {
   state.mappingLocked = false;
   state.mappingVisible = true;
   resetSummaryState();
   refreshMappingValidationState();
   focusSection(mappingSection);
-});
+}
+
+// Edit mappings button (unlock after summary is created)
+editMappingsButton.addEventListener("click", enterMappingEditMode);
+if (summaryEditMappingsButton) summaryEditMappingsButton.addEventListener("click", enterMappingEditMode);
+
+function setExtraCostsPanelOpen(isOpen) {
+  if (!extraCostsPanel || !extraCostsToggle) return;
+
+  extraCostsPanel.classList.toggle("is-open", isOpen);
+  extraCostsToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
+}
 
 // Extra costs collapsible toggle
 if (extraCostsToggle) {
   extraCostsToggle.addEventListener("click", () => {
-    extraCostsPanel.classList.toggle("is-open");
+    setExtraCostsPanelOpen(!extraCostsPanel.classList.contains("is-open"));
+  });
+
+  extraCostsToggle.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " " && event.key !== "Spacebar") return;
+
+    event.preventDefault();
+    setExtraCostsPanelOpen(!extraCostsPanel.classList.contains("is-open"));
   });
 }
 
@@ -383,6 +408,7 @@ function resetSummaryState() {
   state.extraCosts = {};
   state.hasDownloadedFile = false;
   summarySection.classList.add("hidden");
+  setExtraCostsPanelOpen(false);
   clearSectionStatus("summary");
   clearDownloadReadyMessage();
   submitAnotherButton.classList.add("hidden");
@@ -2023,3 +2049,4 @@ updateUploadedFilesDisplay();
 updateProcessButtonState();
 updateWizardProgress();
 refreshMappingValidationState();
+setExtraCostsPanelOpen(false);
