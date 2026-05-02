@@ -27,8 +27,10 @@ describe("UI workflow and user-error handling", () => {
 
     expect(app.document.getElementById("fileCount").textContent).toBe("0 of 15 CSVs");
     expect(app.document.getElementById("processButton").disabled).toBe(true);
+    expect(app.document.getElementById("uploadedFilesWrap").classList.contains("hidden")).toBe(true);
+    expect(app.document.getElementById("mappingSection").classList.contains("hidden")).toBe(true);
     expect(app.document.getElementById("summarySection").classList.contains("hidden")).toBe(true);
-    expect(app.document.getElementById("wizardStepUpload").classList.contains("is-active")).toBe(true);
+    expect(app.document.getElementById("uploadSectionStatus").textContent).toBe("");
   });
 
   test("rejects non-CSV uploads before reading file contents", async () => {

@@ -77,19 +77,14 @@ describe("UX, privacy, and security hammer tests", () => {
     expect(toggle.getAttribute("aria-expanded")).toBe("true");
   });
 
-  test("summary view keeps a visible path back to column editing", async () => {
+  test("summary view hides column editing when the CSV matches automatically", async () => {
     app = loadApp();
 
     await generateSummary(app);
 
     const editButton = getVisibleEditColumnsButton(app.document);
 
-    expect(editButton).toBeDefined();
-
-    editButton.click();
-
-    expect(app.document.getElementById("summarySection").classList.contains("hidden")).toBe(true);
-    expect(app.document.getElementById("mappingSection").classList.contains("hidden")).toBe(false);
+    expect(editButton).toBeUndefined();
   });
 
   test("uploaded filenames are rendered as text, not executable markup", async () => {
@@ -220,8 +215,9 @@ describe("UX, privacy, and security hammer tests", () => {
     expect(app.document.getElementById("fileCount").textContent).toBe("0 of 15 CSVs");
     expect(app.document.getElementById("companyNameInput").value).toBe("");
     expect(app.document.getElementById("uploadedFilesWrap").classList.contains("hidden")).toBe(true);
+    expect(app.document.getElementById("mappingSection").classList.contains("hidden")).toBe(true);
     expect(app.document.getElementById("summarySection").classList.contains("hidden")).toBe(true);
-    expect(app.document.getElementById("wizardStepUpload").classList.contains("is-active")).toBe(true);
+    expect(app.document.getElementById("uploadSectionStatus").textContent).toBe("");
     expect(app.document.getElementById("statusMessage").textContent).toBe("");
   });
 

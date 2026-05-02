@@ -1,4 +1,4 @@
-const { loadApp, readFixture } = require("../helpers/appHarness");
+const { createVirtualFile, loadApp, readFixture } = require("../helpers/appHarness");
 
 function expectMonthRow(row, expected) {
   expect(row.month).toBe(expected.month);
@@ -169,5 +169,32 @@ describe("app.js accounting logic", () => {
 
     expect(result.ok).toBe(false);
     expect(result.message).toContain("could not be read as numbers");
+  });
+
+  test("handleSelectedFiles accepts quoted Etsy exports with long-form month dates when the progress tracker is absent", async () => {
+    app = loadApp();
+
+    const sample = [
+      'Date,Type,Title,Info,Currency,Amount,"Fees & Taxes",Net,"Tax Details"',
+      '"30 April, 2025",VAT,"VAT: Processing Fee","Order #3672216433",GBP,--,-£0.05,-£0.05,--',
+      '"30 April, 2025",Fee,"Processing fee","Order #3672216433",GBP,--,-£0.25,-£0.25,--',
+      '"30 April, 2025",Sale,"Payment for Order #3672216433",,GBP,£1.37,--,£1.37,--',
+    ].join("\n");
+
+    await app.hooks.handleSelectedFiles([createVirtualFile("etsy-long-month.csv", sample)]);
+
+    expect(app.hooks.state.uploadedFiles).toHaveLength(1);
+    expect(app.hooks.state.uploadedFiles[0].headers).toEqual([
+      "Date",
+      "Type",
+      "Title",
+      "Info",
+      "Currency",
+      "Amount",
+      "Fees & Taxes",
+      "Net",
+      "Tax Details",
+    ]);
+    expect(app.document.getElementById("uploadSectionStatus").textContent.trim()).toBe("");
   });
 });
