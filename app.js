@@ -13,7 +13,7 @@
    8.  Column Mapping
    9.  Monthly Summary Calculation
    10. Table Rendering
-   11. Export — CSV, XLS, XLSX
+  11. Export — CSV, XLSX
    12. Download
    13. Utilities
    14. Initialise
@@ -143,7 +143,6 @@ const summaryTableBody    = document.getElementById("summaryTableBody");
 const summaryTableFoot    = document.getElementById("summaryTableFoot");
 
 const downloadCsvButton  = document.getElementById("downloadCsvButton");
-const downloadXlsButton  = document.getElementById("downloadXlsButton");
 const downloadXlsxButton = document.getElementById("downloadXlsxButton");
 const downloadReadyMessage = document.getElementById("downloadReadyMessage");
 const submitAnotherButton = document.getElementById("submitAnotherButton");
@@ -297,15 +296,6 @@ downloadCsvButton.addEventListener("click", () => {
     return;
   }
   downloadFile(convertSummaryToCsv(getExportRows()), buildDownloadName("csv"), "text/csv;charset=utf-8;");
-  handleSuccessfulDownload();
-});
-
-downloadXlsButton.addEventListener("click", () => {
-  if (!state.summaryRows.length) {
-    announce("summary", "Generate your report before downloading.", "error");
-    return;
-  }
-  downloadFile(createXlsWorkbookXml(getExportRows()), buildDownloadName("xls"), "application/vnd.ms-excel;charset=utf-8;");
   handleSuccessfulDownload();
 });
 
@@ -1482,7 +1472,7 @@ function sumValues(obj) {
 }
 
 /* =================================================================
-   11. Export — CSV, XLS, XLSX
+  11. Export — CSV, XLSX
    ================================================================= */
 
 function convertSummaryToCsv(rows) {
@@ -1501,7 +1491,7 @@ function convertSummaryToCsv(rows) {
   return lines.join("\r\n");
 }
 
-/** Build a structured list of display rows for XLS/XLSX output. */
+/** Build a structured list of display rows for XLSX output. */
 function buildWorkbookDisplayRows(rows) {
   const bodyRows   = rows.filter((r) => r.month !== "Total");
   const totalRow   = rows.find((r) => r.month === "Total") || null;
@@ -1550,155 +1540,6 @@ function buildWorkbookDisplayRows(rows) {
     lastColumnName:    columnNumberToName(EXPORT_COLUMNS.length),
     usedRangeEndRow:   displayRows.length,
   };
-}
-
-/* --- XLS (SpreadsheetML) ----------------------------------------- */
-
-function getXlsStyleId(rowKind, cellType) {
-  if (rowKind === "title")   return "sTitle";
-  if (rowKind === "meta")    return "sMeta";
-  if (rowKind === "spacer")  return "sSpacer";
-  if (rowKind === "header")  return "sHeader";
-  if (rowKind === "total")   return cellType === "currency" ? "sTotalCurrency" : "sTotalLabel";
-  if (rowKind === "dataAlt") return cellType === "currency" ? "sCurrencyAlt"   : "sTextAlt";
-  return cellType === "currency" ? "sCurrency" : "sText";
-}
-
-function createXlsWorkbookXml(rows) {
-  const symbol    = xmlEscape(state.displaySymbol || "");
-  const dateStamp = xmlEscape(new Date().toISOString().slice(0, 10));
-  const layout    = buildWorkbookDisplayRows(rows);
-  const fmtStr    = xmlEscape(`${state.displaySymbol || ""}#,##0.00;[Red](${state.displaySymbol || ""}#,##0.00)`);
-
-  const bodyRows = layout.displayRows.map((row) => {
-    const cells = row.cells.map((cell) => {
-      const styleId = getXlsStyleId(row.kind, cell.type);
-      if (cell.type === "currency") {
-        return `<Cell ss:StyleID="${styleId}"><Data ss:Type="Number">${Number(cell.value || 0).toFixed(2)}</Data></Cell>`;
-      }
-      return `<Cell ss:StyleID="${styleId}"><Data ss:Type="String">${xmlEscape(cell.value || "")}</Data></Cell>`;
-    }).join("");
-    return `<Row ss:Height="${row.height}">${cells}</Row>`;
-  }).join("");
-
-  const colDefs = EXPORT_COLUMNS.map((col) => `<Column ss:AutoFitWidth="0" ss:Width="${col.width * 7.4}"/>`).join("");
-
-  return `<?xml version="1.0"?>
-<?mso-application progid="Excel.Sheet"?>
-<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
- xmlns:o="urn:schemas-microsoft-com:office:office"
- xmlns:x="urn:schemas-microsoft-com:office:excel"
- xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
- xmlns:html="http://www.w3.org/TR/REC-html40">
- <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">
-  <Author>SimpleBizToolkit.com</Author>
-  <Created>${dateStamp}T00:00:00Z</Created>
- </DocumentProperties>
- <Styles>
-  <Style ss:ID="Default" ss:Name="Normal">
-   <Alignment ss:Vertical="Center"/>
-   <Font ss:FontName="Calibri" ss:Size="11" ss:Color="#2B2A28"/>
-  </Style>
-  <Style ss:ID="sTitle">
-   <Font ss:FontName="Calibri" ss:Size="15" ss:Bold="1" ss:Color="#1A4B3E"/>
-   <Interior ss:Color="#F4EFE7" ss:Pattern="Solid"/>
-   <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>
-  </Style>
-  <Style ss:ID="sMeta">
-   <Font ss:FontName="Calibri" ss:Size="10" ss:Italic="1" ss:Color="#6D665E"/>
-   <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>
-  </Style>
-  <Style ss:ID="sSpacer">
-   <Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/>
-  </Style>
-  <Style ss:ID="sHeader">
-   <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1" ss:Color="#FFFFFF"/>
-   <Interior ss:Color="#1F6A52" ss:Pattern="Solid"/>
-   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
-   <Borders>
-    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#D9D0C0"/>
-    <Border ss:Position="Left"   ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#D9D0C0"/>
-    <Border ss:Position="Right"  ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#D9D0C0"/>
-    <Border ss:Position="Top"    ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#D9D0C0"/>
-   </Borders>
-  </Style>
-  <Style ss:ID="sText">
-   <Borders>
-    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E7DED0"/>
-    <Border ss:Position="Left"   ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E7DED0"/>
-    <Border ss:Position="Right"  ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E7DED0"/>
-    <Border ss:Position="Top"    ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E7DED0"/>
-   </Borders>
-  </Style>
-  <Style ss:ID="sTextAlt">
-   <Interior ss:Color="#FAF7F2" ss:Pattern="Solid"/>
-   <Borders>
-    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E7DED0"/>
-    <Border ss:Position="Left"   ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E7DED0"/>
-    <Border ss:Position="Right"  ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E7DED0"/>
-    <Border ss:Position="Top"    ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E7DED0"/>
-   </Borders>
-  </Style>
-  <Style ss:ID="sCurrency">
-   <Alignment ss:Horizontal="Right" ss:Vertical="Center"/>
-   <NumberFormat ss:Format="${fmtStr}"/>
-   <Borders>
-    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E7DED0"/>
-    <Border ss:Position="Left"   ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E7DED0"/>
-    <Border ss:Position="Right"  ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E7DED0"/>
-    <Border ss:Position="Top"    ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E7DED0"/>
-   </Borders>
-  </Style>
-  <Style ss:ID="sCurrencyAlt">
-   <Interior ss:Color="#FAF7F2" ss:Pattern="Solid"/>
-   <Alignment ss:Horizontal="Right" ss:Vertical="Center"/>
-   <NumberFormat ss:Format="${fmtStr}"/>
-   <Borders>
-    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E7DED0"/>
-    <Border ss:Position="Left"   ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E7DED0"/>
-    <Border ss:Position="Right"  ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E7DED0"/>
-    <Border ss:Position="Top"    ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E7DED0"/>
-   </Borders>
-  </Style>
-  <Style ss:ID="sTotalLabel">
-   <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1" ss:Color="#1A4B3E"/>
-   <Interior ss:Color="#EAF3EE" ss:Pattern="Solid"/>
-   <Borders>
-    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#C8D8D0"/>
-    <Border ss:Position="Left"   ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#C8D8D0"/>
-    <Border ss:Position="Right"  ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#C8D8D0"/>
-    <Border ss:Position="Top"    ss:LineStyle="Continuous" ss:Weight="2" ss:Color="#1F6A52"/>
-   </Borders>
-  </Style>
-  <Style ss:ID="sTotalCurrency">
-   <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1" ss:Color="#1A4B3E"/>
-   <Interior ss:Color="#EAF3EE" ss:Pattern="Solid"/>
-   <Alignment ss:Horizontal="Right" ss:Vertical="Center"/>
-   <NumberFormat ss:Format="${fmtStr}"/>
-   <Borders>
-    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#C8D8D0"/>
-    <Border ss:Position="Left"   ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#C8D8D0"/>
-    <Border ss:Position="Right"  ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#C8D8D0"/>
-    <Border ss:Position="Top"    ss:LineStyle="Continuous" ss:Weight="2" ss:Color="#1F6A52"/>
-   </Borders>
-  </Style>
- </Styles>
- <Worksheet ss:Name="Monthly Accounts">
-  <Table>
-   ${colDefs}
-   ${bodyRows}
-  </Table>
-  <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
-   <Selected/>
-   <FreezePanes/>
-   <FrozenNoSplit/>
-   <SplitHorizontal>${layout.headerRowNumber}</SplitHorizontal>
-   <TopRowBottomPane>${layout.headerRowNumber}</TopRowBottomPane>
-   <ProtectObjects>False</ProtectObjects>
-   <ProtectScenarios>False</ProtectScenarios>
-  </WorksheetOptions>
- </Worksheet>
-</Workbook>`;
 }
 
 /* --- XLSX (OpenXML ZIP) ------------------------------------------ */
