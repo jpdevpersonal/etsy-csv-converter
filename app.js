@@ -388,6 +388,8 @@ function focusSection(element) {
 
 /** Update wizard progress step states based on current application state. */
 function updateWizardProgress() {
+  if (!wizardStepUpload || !wizardStepMapping || !wizardStepSummary) return;
+
   const hasFiles        = state.uploadedFiles.length > 0;
   const hasSummary      = state.summaryRows.length > 0;
   const hasMappingBlock = Boolean(state.mappingBlockMessage);
@@ -789,10 +791,14 @@ function refreshMappingValidationState(options = {}) {
 
   const validation    = getMappingValidationResult(state.mappings);
   const inputsLocked  = state.mappingLocked;
+  const needsColumnReview = !validation.ok || requiresMappingReview(state.mappings);
 
   document.querySelectorAll("[data-mapping-key]").forEach((el) => { el.disabled = inputsLocked; });
   const summaryActive = !summarySection.classList.contains("hidden");
   editMappingsButton.classList.toggle("hidden", !state.mappingLocked || summaryActive);
+  if (summaryEditMappingsButton) {
+    summaryEditMappingsButton.classList.toggle("hidden", !summaryActive || !needsColumnReview);
+  }
   if (mappingResetButton) mappingResetButton.classList.add("hidden");
   if (mappingHelper) mappingHelper.textContent = DEFAULT_MAPPING_HELPER_TEXT;
   // Lock banner only shown when there are column problems and locked
@@ -821,7 +827,9 @@ function refreshMappingValidationState(options = {}) {
   setElementStatus(mappingSectionStatus, validation.message, "success");
   processButton.disabled = state.mappingLocked;
   processHelper.textContent = state.mappingLocked
-    ? "Columns locked. Click Edit Columns to make changes."
+    ? needsColumnReview
+      ? "Columns locked. Click Edit Columns to make changes."
+      : "Columns matched and locked."
     : state.mappingVisible || requiresMappingReview(state.mappings)
       ? "If your CSV uses an unusual column name, match it above or leave optional fields as Not used."
       : "";
