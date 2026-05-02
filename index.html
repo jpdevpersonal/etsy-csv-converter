@@ -296,80 +296,6 @@
         </div>
       </section>
 
-      <!-- ============================================================
-           Progress tracker
-           ============================================================ -->
-      <!-- <nav class="progress-tracker" aria-label="Steps">
-        <div id="wizardStepUpload" class="progress-step is-active">
-          <div class="progress-badge" aria-hidden="true">
-            <span class="progress-step-number">1</span>
-            <svg
-              class="progress-check-icon"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="3"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-          </div>
-          <div class="progress-info">
-            <span class="progress-label">Step 1</span>
-            <strong class="progress-title">Choose CSV</strong>
-          </div>
-        </div>
-        <div class="progress-connector" aria-hidden="true"></div>
-        <div id="wizardStepMapping" class="progress-step">
-          <div class="progress-badge" aria-hidden="true">
-            <span class="progress-step-number">2</span>
-            <svg
-              class="progress-check-icon"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="3"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-          </div>
-          <div class="progress-info">
-            <span class="progress-label">Step 2</span>
-            <strong class="progress-title">Check Columns</strong>
-          </div>
-        </div>
-        <div class="progress-connector" aria-hidden="true"></div>
-        <div id="wizardStepSummary" class="progress-step">
-          <div class="progress-badge" aria-hidden="true">
-            <span class="progress-step-number">3</span>
-            <svg
-              class="progress-check-icon"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="3"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-          </div>
-          <div class="progress-info">
-            <span class="progress-label">Step 3</span>
-            <strong class="progress-title">View Report</strong>
-          </div>
-        </div>
-      </nav> -->
-
       <div class="tool-grid">
         <!-- ============================================================
              Step 1: Upload
@@ -407,7 +333,7 @@
             <input
               id="companyNameInput"
               type="text"
-              maxlength="120"
+              maxlength="100"
               placeholder="e.g. My Etsy Shop Ltd"
               aria-label="Company or shop name (optional)"
             />
@@ -510,71 +436,6 @@
           </div>
         </section>
 
-        <!-- ============================================================
-             Step 2: Column mapping
-             ============================================================ -->
-        <section
-          class="card hidden"
-          id="mappingSection"
-          aria-labelledby="mapping-heading"
-        >
-          <div class="card-header">
-            <div class="step-tag">
-              <span class="step-badge" aria-hidden="true">2</span>
-              Step 2 of 3
-            </div>
-            <h2 id="mapping-heading">Match your CSV columns</h2>
-            <p class="helper" id="mappingHelper">
-              We've automatically matched the columns in your CSV to the fields
-              below. The three starred fields (<strong>*</strong>) are required
-              — if a dropdown shows <em>Please choose a column</em>, pick the
-              closest match from your CSV before continuing.
-            </p>
-          </div>
-
-          <div
-            id="mappingSectionStatus"
-            class="status status-inline"
-            role="alert"
-            aria-live="polite"
-          ></div>
-
-          <div class="secondary-actions">
-            <button
-              type="button"
-              id="mappingResetButton"
-              class="button button-secondary hidden"
-            >
-              Restart
-            </button>
-          </div>
-
-          <div
-            id="mappingLockBanner"
-            class="mapping-lock-banner hidden"
-            role="status"
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-            </svg>
-            Column matching is locked. Click <strong>Edit Columns</strong> below
-            to make changes.
-          </div>
-
-          <div class="mapping-grid" id="mappingGrid"></div>
-        </section>
-
         <section
           class="card hidden"
           id="processCard"
@@ -589,8 +450,9 @@
               Ready to generate your profit breakdown?
             </h2>
             <p class="helper">
-              Once you generate the breakdown you can still edit columns if
-              something looks off in the results.
+              We'll automatically use the standard Etsy columns we find in your
+              CSV. If anything looks wrong in the results, start over with a
+              fresh export.
             </p>
           </div>
           <div
@@ -611,13 +473,6 @@
             <span id="processHelper" class="helper"
               >Choose at least one CSV to continue.</span
             >
-            <button
-              type="button"
-              id="editMappingsButton"
-              class="button button-secondary hidden"
-            >
-              Edit Columns
-            </button>
             <button
               type="button"
               id="cancelButton"
@@ -654,16 +509,6 @@
             role="alert"
             aria-live="polite"
           ></div>
-
-          <div class="secondary-actions">
-            <button
-              type="button"
-              id="summaryEditMappingsButton"
-              class="button button-secondary hidden"
-            >
-              Edit Columns
-            </button>
-          </div>
 
           <div class="summary-layout">
             <!-- Optional extra costs (collapsible) -->
@@ -888,6 +733,6 @@
       </p>
     </footer>
 
-    <script src="app.js?v=20260430g" defer></script>
+    <script src="app.js?v=20260502a" defer></script>
   </body>
 </html>

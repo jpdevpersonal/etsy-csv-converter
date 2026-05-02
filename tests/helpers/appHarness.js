@@ -21,13 +21,11 @@ window.__appTestHooks__ = {
   guessMappings,
   buildMonthlySummary,
   buildCombinedMonthlySummary,
-  refreshMappingValidationState,
   renderSummaryTable,
   renderCostTable,
   getSummaryWithCosts,
   getExportRows,
   handleSelectedFiles,
-  updateMappingsFromInputs,
   resetToolState
 };
 `;

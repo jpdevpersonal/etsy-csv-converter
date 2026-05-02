@@ -15,7 +15,7 @@ describe("app harness smoke test", () => {
 
     await uploadFixture(app, "etsy-no-headers.csv");
 
-    expect(app.document.getElementById("mappingSectionStatus").textContent).toContain(
+    expect(app.document.getElementById("uploadSectionStatus").textContent).toContain(
       "check the file format",
     );
     expect(app.document.getElementById("processButton").disabled).toBe(true);
