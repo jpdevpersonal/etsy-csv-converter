@@ -575,14 +575,30 @@
           <div class="mapping-grid" id="mappingGrid"></div>
         </section>
 
-        <div id="processCard" class="hidden">
-          <h3 id="process-heading" style="margin-bottom: 0.4rem">
-            Ready to generate your profit breakdown?
-          </h3>
-          <p class="helper" style="margin-bottom: 1rem">
-            Once you generate the breakdown you can still edit columns if
-            something looks off in the results.
-          </p>
+        <section
+          class="card hidden"
+          id="processCard"
+          aria-labelledby="process-heading"
+        >
+          <div class="card-header">
+            <div class="step-tag">
+              <span class="step-badge" aria-hidden="true">2</span>
+              Step 2 of 3
+            </div>
+            <h2 id="process-heading">
+              Ready to generate your profit breakdown?
+            </h2>
+            <p class="helper">
+              Once you generate the breakdown you can still edit columns if
+              something looks off in the results.
+            </p>
+          </div>
+          <div
+            id="processSectionStatus"
+            class="status status-inline"
+            role="alert"
+            aria-live="polite"
+          ></div>
           <div class="process-row">
             <button
               type="button"
@@ -605,12 +621,12 @@
             <button
               type="button"
               id="cancelButton"
-              class="button button-secondary"
+              class="button button-secondary hidden"
             >
               Start Over
             </button>
           </div>
-        </div>
+        </section>
 
         <!-- ============================================================
              Step 3: Summary and download
@@ -767,7 +783,7 @@
                 id="downloadCsvButton"
                 class="button button-primary"
               >
-                Save CSV
+                Save as CSV
               </button>
             </div>
             <div

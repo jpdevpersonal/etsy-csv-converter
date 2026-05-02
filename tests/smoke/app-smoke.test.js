@@ -16,7 +16,7 @@ describe("app harness smoke test", () => {
     await uploadFixture(app, "etsy-no-headers.csv");
 
     expect(app.document.getElementById("mappingSectionStatus").textContent).toContain(
-      "does not appear to include a header row",
+      "check the file format",
     );
     expect(app.document.getElementById("processButton").disabled).toBe(true);
     expect(app.document.getElementById("fileCount").textContent).toBe("0 of 15 CSVs");

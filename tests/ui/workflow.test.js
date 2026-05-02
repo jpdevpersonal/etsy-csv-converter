@@ -53,8 +53,28 @@ describe("UI workflow and user-error handling", () => {
     await app.hooks.handleSelectedFiles([createVirtualFile("blank-headers.csv", blankHeaderCsv)]);
 
     expect(app.document.getElementById("mappingSectionStatus").textContent).toContain(
-      "missing one or more column headers",
+      "check the file format",
     );
+    expect(app.document.getElementById("processButton").disabled).toBe(true);
+    expect(app.document.getElementById("uploadedFilesWrap").classList.contains("hidden")).toBe(true);
+  });
+
+  test("blocks the whole batch and shows the file name when one uploaded CSV has header-format errors", async () => {
+    app = loadApp();
+
+    const badHeaderCsv = [
+      "Date,Type,,Info,Currency,Amount,Fees & Taxes,Net,Tax Details",
+      "30-Apr-25,Sale,Payment for Order #3672216433,,GBP,£1.37,--,£1.37,--",
+    ].join("\n");
+
+    await app.hooks.handleSelectedFiles([
+      createVirtualFile("good.csv", readFixture("etsy-good.csv")),
+      createVirtualFile("bad-header.csv", badHeaderCsv),
+    ]);
+
+    expect(app.document.getElementById("mappingSectionStatus").textContent).toContain("bad-header.csv");
+    expect(app.document.getElementById("mappingSectionStatus").textContent).toContain("check the file format");
+    expect(app.document.getElementById("fileCount").textContent).toBe("0 of 15 CSVs");
     expect(app.document.getElementById("processButton").disabled).toBe(true);
     expect(app.document.getElementById("uploadedFilesWrap").classList.contains("hidden")).toBe(true);
   });
@@ -134,10 +154,71 @@ describe("UI workflow and user-error handling", () => {
     await uploadFixture(app, "etsy-invalid-amount.csv");
     app.document.getElementById("processButton").click();
 
-    expect(app.document.getElementById("mappingSectionStatus").textContent).toContain(
-      "could not be read as numbers",
+    expect(app.document.getElementById("mappingSection").classList.contains("hidden")).toBe(true);
+    expect(app.document.getElementById("processSectionStatus").textContent).toContain(
+      "money values are not in the expected format",
     );
+    expect(app.document.getElementById("processSectionStatus").textContent).toContain(
+      "Check the CSV format and try again, or delete the file from the upload list.",
+    );
+    expect(app.document.getElementById("processHelper").textContent).toBe("");
+    expect(app.document.getElementById("processButton").classList.contains("hidden")).toBe(true);
+    expect(app.document.getElementById("cancelButton").classList.contains("hidden")).toBe(false);
     expect(app.document.getElementById("summarySection").classList.contains("hidden")).toBe(true);
+  });
+
+  test("shows the offending file name and blocks progress when one file in a multi-file batch has unreadable numeric values", async () => {
+    app = loadApp();
+
+    await app.hooks.handleSelectedFiles([
+      createVirtualFile("good.csv", readFixture("etsy-good.csv")),
+      createVirtualFile("broken-values.csv", readFixture("etsy-invalid-amount.csv")),
+    ]);
+
+    app.document.getElementById("processButton").click();
+
+    expect(app.document.getElementById("processSectionStatus").textContent).toContain("broken-values.csv");
+    expect(app.document.getElementById("processSectionStatus").textContent).toContain(
+      "money values are not in the expected format",
+    );
+    expect(app.document.getElementById("processButton").classList.contains("hidden")).toBe(true);
+    expect(app.document.getElementById("cancelButton").classList.contains("hidden")).toBe(false);
+    expect(app.document.getElementById("summarySection").classList.contains("hidden")).toBe(true);
+  });
+
+  test("removing a bad CSV after a processing error restores Step 2 and allows regeneration", async () => {
+    app = loadApp();
+
+    await app.hooks.handleSelectedFiles([
+      createVirtualFile("good.csv", readFixture("etsy-good.csv")),
+      createVirtualFile("broken-values.csv", readFixture("etsy-invalid-amount.csv")),
+    ]);
+
+    app.document.getElementById("processButton").click();
+    app.document.querySelector('button[aria-label="Remove broken-values.csv"]').click();
+
+    expect(app.document.getElementById("processSectionStatus").textContent).toBe("");
+    expect(app.document.getElementById("processButton").classList.contains("hidden")).toBe(false);
+    expect(app.document.getElementById("cancelButton").classList.contains("hidden")).toBe(true);
+    expect(app.document.getElementById("fileCount").textContent).toBe("1 of 15 CSVs");
+    expect(app.document.getElementById("processCard").textContent).toContain("Step 2 of 3");
+
+    app.document.getElementById("processButton").click();
+    expect(app.document.getElementById("summarySection").classList.contains("hidden")).toBe(false);
+  });
+
+  test("uploading a new valid CSV after a processing error restarts Step 2", async () => {
+    app = loadApp();
+
+    await uploadFixture(app, "etsy-invalid-amount.csv");
+    app.document.getElementById("processButton").click();
+
+    await uploadFixture(app, "etsy-good.csv");
+
+    expect(app.document.getElementById("processSectionStatus").textContent).toBe("");
+    expect(app.document.getElementById("processButton").classList.contains("hidden")).toBe(false);
+    expect(app.document.getElementById("cancelButton").classList.contains("hidden")).toBe(true);
+    expect(app.document.getElementById("processCard").textContent).toContain("Step 2 of 3");
   });
 
   test("enforces the 15-file upload limit and warns about skipped files", async () => {
