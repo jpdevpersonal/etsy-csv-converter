@@ -144,6 +144,7 @@ main {
   border: 1px solid transparent;
   font-weight: 600;
   font-size: 0.95rem;
+  white-space: pre-line;
 }
 
 .status[data-type="error"] {
@@ -666,12 +667,19 @@ main {
   display: flex;
   align-items: center;
   gap: 0.6rem;
+  justify-content: space-between;
   padding: 0.5rem 0.8rem;
   border-radius: 10px;
   background: var(--soft);
   font-size: 0.88rem;
   color: var(--heading);
   font-weight: 500;
+}
+
+.upload-list-name {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .upload-list li::before {
@@ -682,6 +690,39 @@ main {
   border-radius: 50%;
   background: var(--primary);
   flex-shrink: 0;
+}
+
+.upload-remove-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid rgba(19, 105, 74, 0.18);
+  background: white;
+  color: var(--primary-dark);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    background 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+.upload-remove-button:hover {
+  background: rgba(19, 105, 74, 0.08);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+
+.upload-remove-button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(19, 105, 74, 0.14);
 }
 
 /* --- Buttons ------------------------------------------------------ */

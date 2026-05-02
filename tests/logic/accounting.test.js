@@ -168,7 +168,7 @@ describe("app.js accounting logic", () => {
     });
 
     expect(result.ok).toBe(false);
-    expect(result.message).toContain("could not be read as numbers");
+    expect(result.message).toContain("money values are not in the expected format");
   });
 
   test("handleSelectedFiles accepts quoted Etsy exports with long-form month dates when the progress tracker is absent", async () => {

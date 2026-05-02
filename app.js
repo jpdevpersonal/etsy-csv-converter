@@ -128,6 +128,7 @@ const mappingSectionStatus = document.getElementById("mappingSectionStatus");
 const mappingLockBanner   = document.getElementById("mappingLockBanner");
 const mappingResetButton  = document.getElementById("mappingResetButton");
 const processCard         = document.getElementById("processCard");
+const processSectionStatus = document.getElementById("processSectionStatus");
 const processButton       = document.getElementById("processButton");
 const processHelper       = document.getElementById("processHelper");
 const editMappingsButton  = document.getElementById("editMappingsButton");
@@ -153,12 +154,15 @@ const wizardStepMapping = document.getElementById("wizardStepMapping");
 const wizardStepSummary = document.getElementById("wizardStepSummary");
 
 const DEFAULT_MAPPING_HELPER_TEXT = "We've automatically matched the columns in your CSV to the fields below. The three starred fields (*) are required — if a dropdown shows Please choose a column, pick the closest match from your CSV before continuing.";
-const BLOCKED_MAPPING_HELPER_TEXT = "We cannot continue because this file does not contain usable Etsy column headers. Export a fresh CSV from Etsy, then try again.";
+const BLOCKED_MAPPING_HELPER_TEXT = "We cannot continue because this CSV format is not what we expected. Please check the file format and try again with a standard Etsy export.";
+
+let processErrorActive = false;
 
 /** Maps section keys to their inline status elements. */
 const SECTION_STATUS_MAP = {
   upload:  uploadSectionStatus,
   mapping: mappingSectionStatus,
+  process: processSectionStatus,
   summary: summarySectionStatus,
 };
 
@@ -244,6 +248,59 @@ submitAnotherButton.addEventListener("click", resetToolState);
 cancelButton.addEventListener("click", resetToolState);
 if (mappingResetButton) mappingResetButton.addEventListener("click", resetToolState);
 
+function updateProcessActionVisibility() {
+  processButton.classList.toggle("hidden", processErrorActive);
+  cancelButton.classList.toggle("hidden", !processErrorActive);
+}
+
+function recalculateStateFromUploadedFiles(options = {}) {
+  const { focus = true } = options;
+
+  state.combinedHeaders = combineHeaders(state.uploadedFiles);
+  state.displaySymbol = state.uploadedFiles.find((file) => file.displaySymbol)?.displaySymbol || "";
+  state.mappingBlockMessage = "";
+  state.mappingLocked = false;
+
+  clearMessage();
+  clearSectionStatus("upload");
+  clearSectionStatus("mapping");
+  clearSectionStatus("process");
+  resetSummaryState();
+
+  if (!state.uploadedFiles.length) {
+    state.mappings = { date: "", type: "", amount: "", fee: "", net: "", description: "" };
+    state.mappingVisible = false;
+    mappingGrid.innerHTML = "";
+    mappingSection.classList.add("hidden");
+    processCard.classList.add("hidden");
+    if (mappingHelper) mappingHelper.textContent = DEFAULT_MAPPING_HELPER_TEXT;
+
+    updateUploadedFilesDisplay();
+    updateProcessButtonState();
+    updateWizardProgress();
+    refreshMappingValidationState();
+    if (focus) focusSection(uploadCard);
+    return;
+  }
+
+  state.mappings = buildCombinedMappings(state.mappings, state.combinedHeaders);
+  const preCheck = getMappingValidationResult(state.mappings);
+  state.mappingVisible = !preCheck.ok || requiresMappingReview(state.mappings);
+  renderMappingFields(state.combinedHeaders);
+
+  updateUploadedFilesDisplay();
+  updateProcessButtonState();
+  updateWizardProgress();
+  refreshMappingValidationState();
+
+  if (focus) focusSection(state.mappingVisible ? mappingSection : processCard);
+}
+
+function removeUploadedFile(fileId) {
+  state.uploadedFiles = state.uploadedFiles.filter((file) => file.id !== fileId);
+  recalculateStateFromUploadedFiles();
+}
+
 // Process / create summary
 processButton.addEventListener("click", () => {
   if (!state.uploadedFiles.length) {
@@ -251,6 +308,9 @@ processButton.addEventListener("click", () => {
     return;
   }
 
+  clearSectionStatus("process");
+  processErrorActive = false;
+  updateProcessActionVisibility();
   updateMappingsFromInputs();
 
   const mappingValidation = refreshMappingValidationState({ scrollOnBlock: true });
@@ -267,7 +327,12 @@ processButton.addEventListener("click", () => {
 
   const result = buildCombinedMonthlySummary(state.uploadedFiles, state.mappings);
   if (!result.ok) {
-    announce("mapping", result.message, "error");
+    clearSectionStatus("mapping");
+    processErrorActive = true;
+    updateProcessActionVisibility();
+    announce("process", `${result.message}\nCheck the CSV format and try again, or delete the file from the upload list.`, "error");
+    processHelper.textContent = "";
+    focusSection(processCard);
     return;
   }
 
@@ -284,6 +349,8 @@ processButton.addEventListener("click", () => {
   announce("summary", "Your profit breakdown is ready. Add extra costs if you want, or download your report now.", "success");
   clearDownloadReadyMessage();
   state.hasDownloadedFile = false;
+  processErrorActive = false;
+  updateProcessActionVisibility();
   submitAnotherButton.classList.add("hidden");
   updateWizardProgress();
   focusSection(summarySection);
@@ -419,6 +486,7 @@ function resetToolState() {
   state.mappingVisible = false;
   state.mappingBlockMessage = "";
   state.hasDownloadedFile = false;
+  processErrorActive = false;
 
   companyNameInput.value = "";
   csvInput.value = "";
@@ -431,12 +499,14 @@ function resetToolState() {
   clearMessage();
   clearSectionStatus("upload");
   clearSectionStatus("mapping");
+  clearSectionStatus("process");
   clearSectionStatus("summary");
   clearDownloadReadyMessage();
   submitAnotherButton.classList.add("hidden");
   editMappingsButton.classList.add("hidden");
   if (mappingResetButton) mappingResetButton.classList.add("hidden");
   if (mappingHelper) mappingHelper.textContent = DEFAULT_MAPPING_HELPER_TEXT;
+  updateProcessActionVisibility();
 
   updateUploadedFilesDisplay();
   updateProcessButtonState();
@@ -454,13 +524,13 @@ function formatMismatchMessage(mismatches) {
     : preview;
 }
 
-function showHeaderFormatBlock(message) {
+function showHeaderFormatBlock(fileName, message) {
   state.uploadedFiles = [];
   state.combinedHeaders = [];
   state.mappings = { date: "", type: "", amount: "", fee: "", net: "", description: "" };
   state.mappingLocked = false;
   state.mappingVisible = true;
-  state.mappingBlockMessage = message;
+  state.mappingBlockMessage = fileName ? `${fileName}: ${message}` : message;
 
   resetSummaryState();
   mappingGrid.innerHTML = "";
@@ -474,6 +544,32 @@ function showHeaderFormatBlock(message) {
   refreshMappingValidationState({ scrollOnBlock: true });
 }
 
+function showUploadFormatError(fileName, message) {
+  state.uploadedFiles = [];
+  state.combinedHeaders = [];
+  state.mappings = { date: "", type: "", amount: "", fee: "", net: "", description: "" };
+  state.mappingLocked = false;
+  state.mappingVisible = false;
+  state.mappingBlockMessage = "";
+
+  resetSummaryState();
+  mappingGrid.innerHTML = "";
+  uploadedFilesList.innerHTML = "";
+  uploadedFilesWrap.classList.add("hidden");
+  mappingSection.classList.add("hidden");
+  processCard.classList.add("hidden");
+  editMappingsButton.classList.add("hidden");
+  if (mappingResetButton) mappingResetButton.classList.add("hidden");
+  if (mappingHelper) mappingHelper.textContent = DEFAULT_MAPPING_HELPER_TEXT;
+
+  updateUploadedFilesDisplay();
+  updateProcessButtonState();
+  updateWizardProgress();
+  refreshMappingValidationState();
+  announce("upload", fileName ? `${fileName}: ${message}` : message, "error");
+  focusSection(uploadCard);
+}
+
 /* =================================================================
    6. Upload Handling
    ================================================================= */
@@ -482,12 +578,12 @@ function showHeaderFormatBlock(message) {
 async function handleFile(file) {
   if (state.uploadedFiles.length >= MAX_FILE_COUNT) {
     announce("upload", `You can add up to ${MAX_FILE_COUNT} CSV files. Remove some or generate a report first.`, "warning");
-    return;
+    return false;
   }
 
   if (!file || !file.name.toLowerCase().endsWith(".csv")) {
-    announce("upload", "Please choose an Etsy CSV file (ending in .csv).", "error");
-    return;
+    showUploadFormatError(file?.name || "This file", "Please choose an Etsy CSV file (ending in .csv).");
+    return false;
   }
 
   clearMessage();
@@ -499,22 +595,24 @@ async function handleFile(file) {
     const parsed = parseCsvText(text);
 
     if (!parsed.headers.length || !parsed.rows.length) {
-      announce("upload", "We could not read any rows from that CSV. Please check the file and try again.", "error");
-      return;
+      showUploadFormatError(file.name, "We could not use this CSV because the format is not what we expected. Please check the file format and try again.");
+      return false;
     }
 
     if (hasBlankHeaders(parsed.headers)) {
       showHeaderFormatBlock(
-        "This CSV is missing one or more column headers. Please use the standard Etsy CSV export so the file includes proper header names.",
+        file.name,
+        "This CSV format is missing one or more column headers. Please check the file format and use a standard Etsy export.",
       );
-      return;
+      return false;
     }
 
     if (isLikelyMissingHeaderRow(parsed.headers, parsed.rows)) {
       showHeaderFormatBlock(
-        "This CSV does not appear to include a header row. Please use the standard Etsy CSV export so the file starts with Etsy column headers.",
+        file.name,
+        "This CSV format does not appear to include a header row. Please check the file format and use a standard Etsy export.",
       );
-      return;
+      return false;
     }
 
     const fileEntry = {
@@ -544,8 +642,10 @@ async function handleFile(file) {
     refreshMappingValidationState();
 
     focusSection(state.mappingVisible ? mappingSection : processCard);
+    return true;
   } catch {
-    announce("upload", "We could not read that CSV. Please try again with a standard Etsy export.", "error");
+    showUploadFormatError(file.name, "We could not use this CSV because the format is not what we expected. Please check the file format and try again with a standard Etsy export.");
+    return false;
   }
 }
 
@@ -563,8 +663,8 @@ async function handleSelectedFiles(fileList) {
 
   for (const file of files) {
     if (state.uploadedFiles.length >= MAX_FILE_COUNT) break;
-    await handleFile(file);
-    if (state.mappingBlockMessage) break;
+    const handled = await handleFile(file);
+    if (!handled || state.mappingBlockMessage) break;
   }
 
   if (files.length > availableSlots) {
@@ -584,7 +684,20 @@ function updateUploadedFilesDisplay() {
   uploadedFilesList.innerHTML = "";
   state.uploadedFiles.forEach((file, index) => {
     const item = document.createElement("li");
-    item.textContent = `${index + 1}. ${file.name}`;
+    const name = document.createElement("span");
+    name.className = "upload-list-name";
+    name.textContent = `${index + 1}. ${file.name}`;
+
+    const removeButton = document.createElement("button");
+    removeButton.type = "button";
+    removeButton.className = "upload-remove-button";
+    removeButton.textContent = "×";
+    removeButton.setAttribute("aria-label", `Remove ${file.name}`);
+    removeButton.title = `Remove ${file.name}`;
+    removeButton.addEventListener("click", () => removeUploadedFile(file.id));
+
+    item.appendChild(name);
+    item.appendChild(removeButton);
     uploadedFilesList.appendChild(item);
   });
 
@@ -596,6 +709,8 @@ function updateUploadedFilesDisplay() {
 function updateProcessButtonState() {
   const hasFiles = state.uploadedFiles.length > 0;
   processButton.disabled = !hasFiles || state.mappingLocked || Boolean(state.mappingBlockMessage);
+  processErrorActive = false;
+  updateProcessActionVisibility();
   processHelper.textContent = state.mappingBlockMessage
     ? "Upload a valid Etsy CSV with column headers to continue."
     : hasFiles
@@ -748,6 +863,10 @@ function refreshMappingValidationState(options = {}) {
   const { scrollOnBlock = false } = options;
   const hasFiles = state.uploadedFiles.length > 0;
   const hasMappingBlock = Boolean(state.mappingBlockMessage);
+
+  clearSectionStatus("process");
+  processErrorActive = false;
+  updateProcessActionVisibility();
 
   if (hasMappingBlock) {
     announce("mapping", state.mappingBlockMessage, "error");
@@ -1049,7 +1168,7 @@ function buildCombinedMonthlySummary(files, mappings) {
     const missing  = MAPPING_FIELDS.filter((f) => f.required && !resolved[f.key]);
 
     if (missing.length) {
-      return { ok: false, message: `Required columns are missing for "${file.name}". Please check the column matches.` };
+      return { ok: false, message: `We could not use "${file.name}" because the format is not what we expected. Please check the column format and matches.` };
     }
 
     const result = buildMonthlySummary(file.rows, file.headers, resolved);
@@ -1091,7 +1210,7 @@ function buildMonthlySummary(rows, headers, mappings) {
   };
 
   if (idx.date < 0 || idx.type < 0 || idx.amount < 0) {
-    return { ok: false, message: "Some required columns are missing. Please check date, transaction type, and amount." };
+    return { ok: false, message: "We could not use this CSV because the required columns were not in the expected format. Please check the file format for Date, Transaction type, and Amount." };
   }
 
   const months           = new Map();
@@ -1145,10 +1264,10 @@ function buildMonthlySummary(rows, headers, mappings) {
   });
 
   if (!validRows && invalidDateCount) {
-    return { ok: false, message: "We could not read the date format. Please check that the correct date column is selected." };
+    return { ok: false, message: "We could not use this CSV because the date format is not what we expected. Please check the file format and the selected date column." };
   }
   if (invalidAmtCount > 0) {
-    return { ok: false, message: "Some amount values could not be read as numbers. Please check the amount, fee, and net column matches." };
+    return { ok: false, message: "We could not use this CSV because some money values are not in the expected format. Please check the format of the Amount, Fees, and Net columns." };
   }
   if (!validRows) {
     return { ok: true, summaryRows: [], skippedBecauseIgnoredOnly: true };
