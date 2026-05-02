@@ -10,7 +10,7 @@
    5.  UI Helpers
    6.  Upload Handling
    7.  CSV Parsing
-   8.  Column Mapping
+  8.  Column Detection
    9.  Monthly Summary Calculation
    10. Table Rendering
   11. Export — CSV, XLSX
@@ -24,6 +24,7 @@
    ================================================================= */
 
 const MAX_FILE_COUNT = 15;
+const COMPANY_NAME_MAX_LENGTH = 100;
 
 const MAPPING_FIELDS = [
   {
@@ -101,9 +102,6 @@ const state = {
   extraCosts: {},
   displaySymbol: "",
   companyName: "",
-  mappingLocked: false,
-  mappingVisible: false,
-  mappingBlockMessage: "",
   hasDownloadedFile: false,
 };
 
@@ -121,22 +119,14 @@ const uploadedFilesWrap = document.getElementById("uploadedFilesWrap");
 const uploadedFilesList = document.getElementById("uploadedFilesList");
 const uploadSectionStatus = document.getElementById("uploadSectionStatus");
 
-const mappingSection      = document.getElementById("mappingSection");
-const mappingGrid         = document.getElementById("mappingGrid");
-const mappingHelper       = document.getElementById("mappingHelper");
-const mappingSectionStatus = document.getElementById("mappingSectionStatus");
-const mappingLockBanner   = document.getElementById("mappingLockBanner");
-const mappingResetButton  = document.getElementById("mappingResetButton");
 const processCard         = document.getElementById("processCard");
 const processSectionStatus = document.getElementById("processSectionStatus");
 const processButton       = document.getElementById("processButton");
 const processHelper       = document.getElementById("processHelper");
-const editMappingsButton  = document.getElementById("editMappingsButton");
 const cancelButton        = document.getElementById("cancelButton");
 
 const summarySection      = document.getElementById("summarySection");
 const summarySectionStatus = document.getElementById("summarySectionStatus");
-const summaryEditMappingsButton = document.getElementById("summaryEditMappingsButton");
 const extraCostsPanel     = document.getElementById("extraCostsPanel");
 const extraCostsToggle    = document.getElementById("extraCostsToggle");
 const costTableBody       = document.getElementById("costTableBody");
@@ -149,19 +139,12 @@ const downloadReadyMessage = document.getElementById("downloadReadyMessage");
 const submitAnotherButton = document.getElementById("submitAnotherButton");
 
 const statusMessage     = document.getElementById("statusMessage");
-const wizardStepUpload  = document.getElementById("wizardStepUpload");
-const wizardStepMapping = document.getElementById("wizardStepMapping");
-const wizardStepSummary = document.getElementById("wizardStepSummary");
-
-const DEFAULT_MAPPING_HELPER_TEXT = "We've automatically matched the columns in your CSV to the fields below. The three starred fields (*) are required — if a dropdown shows Please choose a column, pick the closest match from your CSV before continuing.";
-const BLOCKED_MAPPING_HELPER_TEXT = "We cannot continue because this CSV format is not what we expected. Please check the file format and try again with a standard Etsy export.";
 
 let processErrorActive = false;
 
 /** Maps section keys to their inline status elements. */
 const SECTION_STATUS_MAP = {
   upload:  uploadSectionStatus,
-  mapping: mappingSectionStatus,
   process: processSectionStatus,
   summary: summarySectionStatus,
 };
@@ -175,7 +158,11 @@ uploadButton.addEventListener("click", () => csvInput.click());
 
 // Company name
 companyNameInput.addEventListener("input", () => {
-  state.companyName = companyNameInput.value.trim();
+  const sanitisedCompanyName = sanitiseCompanyName(companyNameInput.value);
+  if (companyNameInput.value !== sanitisedCompanyName) {
+    companyNameInput.value = sanitisedCompanyName;
+  }
+  state.companyName = sanitisedCompanyName;
 });
 
 // File input change
@@ -210,18 +197,6 @@ uploadShell.addEventListener("keydown", (event) => {
   csvInput.click();
 });
 
-function enterMappingEditMode() {
-  state.mappingLocked = false;
-  state.mappingVisible = true;
-  resetSummaryState();
-  refreshMappingValidationState();
-  focusSection(mappingSection);
-}
-
-// Edit mappings button (unlock after summary is created)
-editMappingsButton.addEventListener("click", enterMappingEditMode);
-if (summaryEditMappingsButton) summaryEditMappingsButton.addEventListener("click", enterMappingEditMode);
-
 function setExtraCostsPanelOpen(isOpen) {
   if (!extraCostsPanel || !extraCostsToggle) return;
 
@@ -246,7 +221,6 @@ if (extraCostsToggle) {
 // Cancel and Submit Another both perform a full reset
 submitAnotherButton.addEventListener("click", resetToolState);
 cancelButton.addEventListener("click", resetToolState);
-if (mappingResetButton) mappingResetButton.addEventListener("click", resetToolState);
 
 function updateProcessActionVisibility() {
   processButton.classList.toggle("hidden", processErrorActive);
@@ -258,42 +232,27 @@ function recalculateStateFromUploadedFiles(options = {}) {
 
   state.combinedHeaders = combineHeaders(state.uploadedFiles);
   state.displaySymbol = state.uploadedFiles.find((file) => file.displaySymbol)?.displaySymbol || "";
-  state.mappingBlockMessage = "";
-  state.mappingLocked = false;
 
   clearMessage();
   clearSectionStatus("upload");
-  clearSectionStatus("mapping");
   clearSectionStatus("process");
   resetSummaryState();
 
   if (!state.uploadedFiles.length) {
     state.mappings = { date: "", type: "", amount: "", fee: "", net: "", description: "" };
-    state.mappingVisible = false;
-    mappingGrid.innerHTML = "";
-    mappingSection.classList.add("hidden");
-    processCard.classList.add("hidden");
-    if (mappingHelper) mappingHelper.textContent = DEFAULT_MAPPING_HELPER_TEXT;
 
     updateUploadedFilesDisplay();
     updateProcessButtonState();
-    updateWizardProgress();
-    refreshMappingValidationState();
     if (focus) focusSection(uploadCard);
     return;
   }
 
   state.mappings = buildCombinedMappings(state.mappings, state.combinedHeaders);
-  const preCheck = getMappingValidationResult(state.mappings);
-  state.mappingVisible = !preCheck.ok || requiresMappingReview(state.mappings);
-  renderMappingFields(state.combinedHeaders);
 
   updateUploadedFilesDisplay();
   updateProcessButtonState();
-  updateWizardProgress();
-  refreshMappingValidationState();
 
-  if (focus) focusSection(state.mappingVisible ? mappingSection : processCard);
+  if (focus) focusSection(processCard);
 }
 
 function removeUploadedFile(fileId) {
@@ -308,26 +267,11 @@ processButton.addEventListener("click", () => {
     return;
   }
 
-  clearSectionStatus("process");
-  processErrorActive = false;
-  updateProcessActionVisibility();
-  updateMappingsFromInputs();
-
-  const mappingValidation = refreshMappingValidationState({ scrollOnBlock: true });
-  if (!mappingValidation.ok) return;
-
-  const missingRequired = MAPPING_FIELDS
-    .filter((field) => field.required && !state.mappings[field.key])
-    .map((field) => field.label.replace(" column", ""));
-
-  if (missingRequired.length) {
-    announce("mapping", "Choose Date, Transaction type, and Amount before generating your report.", "error");
-    return;
-  }
+  const columnValidation = updateProcessButtonState({ focusOnError: true });
+  if (!columnValidation.ok) return;
 
   const result = buildCombinedMonthlySummary(state.uploadedFiles, state.mappings);
   if (!result.ok) {
-    clearSectionStatus("mapping");
     processErrorActive = true;
     updateProcessActionVisibility();
     announce("process", `${result.message}\nCheck the CSV format and try again, or delete the file from the upload list.`, "error");
@@ -341,10 +285,8 @@ processButton.addEventListener("click", () => {
   renderCostTable();
   renderSummaryTable();
   summarySection.classList.remove("hidden");
-  state.mappingLocked = true;
-  state.mappingVisible = false;
-  refreshMappingValidationState();
   clearSectionStatus("upload");
+  clearSectionStatus("process");
 
   announce("summary", "Your profit breakdown is ready. Add extra costs if you want, or download your report now.", "success");
   clearDownloadReadyMessage();
@@ -352,7 +294,7 @@ processButton.addEventListener("click", () => {
   processErrorActive = false;
   updateProcessActionVisibility();
   submitAnotherButton.classList.add("hidden");
-  updateWizardProgress();
+  updateProcessButtonState();
   focusSection(summarySection);
 });
 
@@ -430,6 +372,10 @@ function clearDownloadReadyMessage() {
   setDownloadReadyMessage("", "");
 }
 
+function sanitiseCompanyName(value) {
+  return String(value || "").slice(0, COMPANY_NAME_MAX_LENGTH).trim();
+}
+
 /** Show the Submit Another button and set the download success message. */
 function handleSuccessfulDownload() {
   state.hasDownloadedFile = true;
@@ -441,24 +387,6 @@ function handleSuccessfulDownload() {
 function focusSection(element) {
   if (!element) return;
   element.scrollIntoView({ behavior: "smooth", block: "start" });
-}
-
-/** Update wizard progress step states based on current application state. */
-function updateWizardProgress() {
-  if (!wizardStepUpload || !wizardStepMapping || !wizardStepSummary) return;
-
-  const hasFiles        = state.uploadedFiles.length > 0;
-  const hasSummary      = state.summaryRows.length > 0;
-  const hasMappingBlock = Boolean(state.mappingBlockMessage);
-
-  wizardStepUpload.classList.toggle("is-active",   !hasFiles && !hasMappingBlock);
-  wizardStepUpload.classList.toggle("is-complete",  hasFiles);
-
-  wizardStepMapping.classList.toggle("is-active",  (hasFiles || hasMappingBlock) && !hasSummary);
-  wizardStepMapping.classList.toggle("is-complete",  hasSummary);
-
-  wizardStepSummary.classList.toggle("is-active",   hasSummary);
-  wizardStepSummary.classList.toggle("is-complete",  false);
 }
 
 /** Reset only the summary section state (called when mappings change). */
@@ -482,36 +410,25 @@ function resetToolState() {
   state.extraCosts = {};
   state.displaySymbol = "";
   state.companyName = "";
-  state.mappingLocked = false;
-  state.mappingVisible = false;
-  state.mappingBlockMessage = "";
   state.hasDownloadedFile = false;
   processErrorActive = false;
 
   companyNameInput.value = "";
   csvInput.value = "";
-  mappingGrid.innerHTML = "";
   uploadedFilesList.innerHTML = "";
   uploadedFilesWrap.classList.add("hidden");
-  mappingSection.classList.add("hidden");
   processCard.classList.add("hidden");
   summarySection.classList.add("hidden");
   clearMessage();
   clearSectionStatus("upload");
-  clearSectionStatus("mapping");
   clearSectionStatus("process");
   clearSectionStatus("summary");
   clearDownloadReadyMessage();
   submitAnotherButton.classList.add("hidden");
-  editMappingsButton.classList.add("hidden");
-  if (mappingResetButton) mappingResetButton.classList.add("hidden");
-  if (mappingHelper) mappingHelper.textContent = DEFAULT_MAPPING_HELPER_TEXT;
   updateProcessActionVisibility();
 
   updateUploadedFilesDisplay();
   updateProcessButtonState();
-  updateWizardProgress();
-  refreshMappingValidationState();
   focusSection(uploadCard);
 }
 
@@ -524,50 +441,8 @@ function formatMismatchMessage(mismatches) {
     : preview;
 }
 
-function showHeaderFormatBlock(fileName, message) {
-  state.uploadedFiles = [];
-  state.combinedHeaders = [];
-  state.mappings = { date: "", type: "", amount: "", fee: "", net: "", description: "" };
-  state.mappingLocked = false;
-  state.mappingVisible = true;
-  state.mappingBlockMessage = fileName ? `${fileName}: ${message}` : message;
-
-  resetSummaryState();
-  mappingGrid.innerHTML = "";
-  uploadedFilesList.innerHTML = "";
-  uploadedFilesWrap.classList.add("hidden");
-  editMappingsButton.classList.add("hidden");
-
-  updateUploadedFilesDisplay();
-  updateProcessButtonState();
-  updateWizardProgress();
-  refreshMappingValidationState({ scrollOnBlock: true });
-}
-
-function showUploadFormatError(fileName, message) {
-  state.uploadedFiles = [];
-  state.combinedHeaders = [];
-  state.mappings = { date: "", type: "", amount: "", fee: "", net: "", description: "" };
-  state.mappingLocked = false;
-  state.mappingVisible = false;
-  state.mappingBlockMessage = "";
-
-  resetSummaryState();
-  mappingGrid.innerHTML = "";
-  uploadedFilesList.innerHTML = "";
-  uploadedFilesWrap.classList.add("hidden");
-  mappingSection.classList.add("hidden");
-  processCard.classList.add("hidden");
-  editMappingsButton.classList.add("hidden");
-  if (mappingResetButton) mappingResetButton.classList.add("hidden");
-  if (mappingHelper) mappingHelper.textContent = DEFAULT_MAPPING_HELPER_TEXT;
-
-  updateUploadedFilesDisplay();
-  updateProcessButtonState();
-  updateWizardProgress();
-  refreshMappingValidationState();
-  announce("upload", fileName ? `${fileName}: ${message}` : message, "error");
-  focusSection(uploadCard);
+function buildUploadFormatErrorMessage(fileName, message) {
+  return fileName ? `${fileName}: ${message}` : message;
 }
 
 /* =================================================================
@@ -577,42 +452,54 @@ function showUploadFormatError(fileName, message) {
 /** Read, validate, and queue a single CSV file. */
 async function handleFile(file) {
   if (state.uploadedFiles.length >= MAX_FILE_COUNT) {
-    announce("upload", `You can add up to ${MAX_FILE_COUNT} CSV files. Remove some or generate a report first.`, "warning");
-    return false;
+    return {
+      ok: false,
+      message: `You can add up to ${MAX_FILE_COUNT} CSV files. Remove some or generate a report first.`,
+    };
   }
 
   if (!file || !file.name.toLowerCase().endsWith(".csv")) {
-    showUploadFormatError(file?.name || "This file", "Please choose an Etsy CSV file (ending in .csv).");
-    return false;
+    return {
+      ok: false,
+      message: buildUploadFormatErrorMessage(
+        file?.name || "This file",
+        "Please choose an Etsy CSV file (ending in .csv).",
+      ),
+    };
   }
-
-  clearMessage();
-  clearSectionStatus("upload");
-  state.mappingBlockMessage = "";
 
   try {
     const text   = await readCsvFile(file);
     const parsed = parseCsvText(text);
 
     if (!parsed.headers.length || !parsed.rows.length) {
-      showUploadFormatError(file.name, "We could not use this CSV because the format is not what we expected. Please check the file format and try again.");
-      return false;
+      return {
+        ok: false,
+        message: buildUploadFormatErrorMessage(
+          file.name,
+          "We could not use this CSV because the format is not what we expected. Please check the file format and try again.",
+        ),
+      };
     }
 
     if (hasBlankHeaders(parsed.headers)) {
-      showHeaderFormatBlock(
-        file.name,
-        "This CSV format is missing one or more column headers. Please check the file format and use a standard Etsy export.",
-      );
-      return false;
+      return {
+        ok: false,
+        message: buildUploadFormatErrorMessage(
+          file.name,
+          "This CSV format is missing one or more column headers. Please check the file format and use a standard Etsy export.",
+        ),
+      };
     }
 
     if (isLikelyMissingHeaderRow(parsed.headers, parsed.rows)) {
-      showHeaderFormatBlock(
-        file.name,
-        "This CSV format does not appear to include a header row. Please check the file format and use a standard Etsy export.",
-      );
-      return false;
+      return {
+        ok: false,
+        message: buildUploadFormatErrorMessage(
+          file.name,
+          "This CSV format does not appear to include a header row. Please check the file format and use a standard Etsy export.",
+        ),
+      };
     }
 
     const fileEntry = {
@@ -633,19 +520,17 @@ async function handleFile(file) {
 
     updateUploadedFilesDisplay();
     updateProcessButtonState();
-    updateWizardProgress();
 
-    state.mappingLocked = false;
-    const preCheck = getMappingValidationResult(state.mappings);
-    state.mappingVisible = !preCheck.ok || requiresMappingReview(state.mappings);
-    renderMappingFields(state.combinedHeaders);
-    refreshMappingValidationState();
-
-    focusSection(state.mappingVisible ? mappingSection : processCard);
-    return true;
+    focusSection(processCard);
+    return { ok: true };
   } catch {
-    showUploadFormatError(file.name, "We could not use this CSV because the format is not what we expected. Please check the file format and try again with a standard Etsy export.");
-    return false;
+    return {
+      ok: false,
+      message: buildUploadFormatErrorMessage(
+        file.name,
+        "We could not use this CSV because the format is not what we expected. Please check the file format and try again with a standard Etsy export.",
+      ),
+    };
   }
 }
 
@@ -655,25 +540,40 @@ async function handleSelectedFiles(fileList) {
   if (!files.length) return;
 
   const availableSlots = Math.max(MAX_FILE_COUNT - state.uploadedFiles.length, 0);
+  const uploadMessages = [];
+  let hasUploadErrors = false;
+  let filesSkippedByLimit = 0;
 
   if (!availableSlots) {
     announce("upload", `You already have ${MAX_FILE_COUNT} CSVs selected. Remove some before adding more.`, "warning");
     return;
   }
 
-  for (const file of files) {
-    if (state.uploadedFiles.length >= MAX_FILE_COUNT) break;
-    const handled = await handleFile(file);
-    if (!handled || state.mappingBlockMessage) break;
+  clearMessage();
+  clearSectionStatus("upload");
+
+  for (let index = 0; index < files.length; index += 1) {
+    if (state.uploadedFiles.length >= MAX_FILE_COUNT) {
+      filesSkippedByLimit = files.length - index;
+      break;
+    }
+
+    const result = await handleFile(files[index]);
+    if (!result.ok && result.message) {
+      uploadMessages.push(result.message);
+      hasUploadErrors = true;
+    }
   }
 
-  if (files.length > availableSlots) {
-    const skipped = files.length - availableSlots;
-    announce(
-      "upload",
-      `Only ${availableSlots} file${availableSlots === 1 ? " was" : "s were"} added. The ${MAX_FILE_COUNT}-file limit was reached and ${skipped} file${skipped === 1 ? " was" : "s were"} skipped.`,
-      "warning",
+  if (filesSkippedByLimit > 0) {
+    uploadMessages.push(
+      `Only ${availableSlots} file${availableSlots === 1 ? " was" : "s were"} added. The ${MAX_FILE_COUNT}-file limit was reached and ${filesSkippedByLimit} file${filesSkippedByLimit === 1 ? " was" : "s were"} skipped.`,
     );
+  }
+
+  if (uploadMessages.length) {
+    announce("upload", uploadMessages.join(" "), hasUploadErrors ? "error" : "warning");
+    if (!state.uploadedFiles.length) focusSection(uploadCard);
   }
 }
 
@@ -705,17 +605,46 @@ function updateUploadedFilesDisplay() {
   uploadButton.disabled = state.uploadedFiles.length >= MAX_FILE_COUNT;
 }
 
-/** Update the process button enabled state and helper text. */
-function updateProcessButtonState() {
+/** Update process-card visibility, button state, and helper text. */
+function updateProcessButtonState(options = {}) {
+  const { focusOnError = false } = options;
   const hasFiles = state.uploadedFiles.length > 0;
-  processButton.disabled = !hasFiles || state.mappingLocked || Boolean(state.mappingBlockMessage);
+  const hasSummary = state.summaryRows.length > 0;
+
   processErrorActive = false;
   updateProcessActionVisibility();
-  processHelper.textContent = state.mappingBlockMessage
-    ? "Upload a valid Etsy CSV with column headers to continue."
-    : hasFiles
-    ? "Required columns are Date, Transaction type, and Amount. Review the matches, then generate your report."
-    : "Choose at least one CSV to continue.";
+
+  if (!hasFiles) {
+    processCard.classList.add("hidden");
+    clearSectionStatus("process");
+    processButton.disabled = true;
+    processHelper.textContent = "Choose at least one CSV to continue.";
+    return { ok: false, type: "empty" };
+  }
+
+  processCard.classList.toggle("hidden", hasSummary);
+
+  if (hasSummary) {
+    clearSectionStatus("process");
+    processButton.disabled = false;
+    processHelper.textContent = "We'll automatically use the standard Etsy columns from your CSV.";
+    return { ok: true, type: "summary" };
+  }
+
+  const validation = getDetectedColumnValidationResult(state.mappings);
+
+  if (!validation.ok) {
+    announce("process", validation.message, "error");
+    processButton.disabled = true;
+    processHelper.textContent = "We could not automatically match Date, Transaction type, and Amount for every file. Use a standard Etsy export or remove the affected file.";
+    if (focusOnError) focusSection(processCard);
+    return validation;
+  }
+
+  setElementStatus(processSectionStatus, validation.message, "success");
+  processButton.disabled = false;
+  processHelper.textContent = "We'll automatically use the standard Etsy columns from your CSV.";
+  return validation;
 }
 
 /* =================================================================
@@ -811,8 +740,8 @@ function detectDelimiter(text) {
 }
 
 /* =================================================================
-   8. Column Mapping
-   ================================================================= */
+  8. Column Detection
+  ================================================================= */
 
 /** Guess column mappings for a set of headers using keyword scoring. */
 function guessMappings(headers) {
@@ -854,191 +783,38 @@ function buildCombinedMappings(currentMappings, headers) {
   return next;
 }
 
-function requiresMappingReview(mappings) {
-  return MAPPING_FIELDS.some((field) => field.reviewIfMissing && !mappings[field.key]);
-}
-
-/** Validate current mappings against uploaded files and update UI accordingly. */
-function refreshMappingValidationState(options = {}) {
-  const { scrollOnBlock = false } = options;
-  const hasFiles = state.uploadedFiles.length > 0;
-  const hasMappingBlock = Boolean(state.mappingBlockMessage);
-
-  clearSectionStatus("process");
-  processErrorActive = false;
-  updateProcessActionVisibility();
-
-  if (hasMappingBlock) {
-    announce("mapping", state.mappingBlockMessage, "error");
-    processButton.disabled = true;
-    processHelper.textContent = "Upload a valid Etsy CSV with column headers to continue.";
-    editMappingsButton.classList.add("hidden");
-    if (mappingHelper) mappingHelper.textContent = BLOCKED_MAPPING_HELPER_TEXT;
-    if (mappingLockBanner) mappingLockBanner.classList.add("hidden");
-    if (mappingResetButton) mappingResetButton.classList.remove("hidden");
-    mappingSection.classList.remove("hidden");
-    mappingGrid.classList.add("hidden");
-    processCard.classList.add("hidden");
-    document.querySelectorAll("[data-mapping-key]").forEach((el) => { el.disabled = false; });
-    if (scrollOnBlock) focusSection(mappingSection);
-    return { ok: false, type: "blocked", message: state.mappingBlockMessage };
-  }
-
-  // No files — disable and clear
-  if (!hasFiles) {
-    clearSectionStatus("mapping");
-    processButton.disabled = true;
-    processHelper.textContent = "Choose at least one CSV to continue.";
-    editMappingsButton.classList.add("hidden");
-    if (mappingLockBanner) mappingLockBanner.classList.add("hidden");
-    if (mappingResetButton) mappingResetButton.classList.add("hidden");
-    mappingGrid.classList.add("hidden");
-    processCard.classList.add("hidden");
-    document.querySelectorAll("[data-mapping-key]").forEach((el) => { el.disabled = false; });
+/** Validate auto-detected required columns and return { ok, type, message }. */
+function getDetectedColumnValidationResult(mappings) {
+  if (!state.uploadedFiles.length) {
     return { ok: false, type: "empty" };
   }
 
-  const validation    = getMappingValidationResult(state.mappings);
-  const inputsLocked  = state.mappingLocked;
-  const needsColumnReview = !validation.ok || requiresMappingReview(state.mappings);
+  const missingByFile = [];
 
-  document.querySelectorAll("[data-mapping-key]").forEach((el) => { el.disabled = inputsLocked; });
-  const summaryActive = !summarySection.classList.contains("hidden");
-  editMappingsButton.classList.toggle("hidden", !state.mappingLocked || summaryActive);
-  if (summaryEditMappingsButton) {
-    summaryEditMappingsButton.classList.toggle("hidden", !summaryActive || !needsColumnReview);
-  }
-  if (mappingResetButton) mappingResetButton.classList.add("hidden");
-  if (mappingHelper) mappingHelper.textContent = DEFAULT_MAPPING_HELPER_TEXT;
-  // Lock banner only shown when there are column problems and locked
-  if (mappingLockBanner) mappingLockBanner.classList.add("hidden");
+  state.uploadedFiles.forEach((file) => {
+    const resolved = resolveMappingsForFile(file, mappings);
+    const missingRequired = MAPPING_FIELDS
+      .filter((field) => field.required && !resolved[field.key])
+      .map((field) => field.label.replace(" column", ""));
 
-  if (!validation.ok) {
-    announce("mapping", validation.message, "error");
-    processButton.disabled = true;
-    processHelper.textContent = validation.type === "mismatch"
-      ? "One or more columns don't match this CSV — use the dropdowns above to correct them."
-      : "Select the Date, Transaction type, and Amount columns above to continue.";
-    state.mappingVisible = true;
-    mappingSection.classList.remove("hidden");
-    mappingGrid.classList.remove("hidden");
-    processCard.classList.remove("hidden");
-    if (mappingLockBanner && state.mappingLocked) mappingLockBanner.classList.remove("hidden");
-    if (scrollOnBlock) focusSection(mappingSection);
-    return validation;
-  }
+    if (missingRequired.length) {
+      missingByFile.push(`${file.name}: ${missingRequired.join(", ")}`);
+    }
+  });
 
-  // Validation ok
-  const summaryVisible = !summarySection.classList.contains("hidden");
-  mappingSection.classList.toggle("hidden", !state.mappingVisible || summaryVisible);
-  mappingGrid.classList.toggle("hidden", !state.mappingVisible || summaryVisible);
-  processCard.classList.toggle("hidden", summaryVisible);
-  setElementStatus(mappingSectionStatus, validation.message, "success");
-  processButton.disabled = state.mappingLocked;
-  processHelper.textContent = state.mappingLocked
-    ? needsColumnReview
-      ? "Columns locked. Click Edit Columns to make changes."
-      : "Columns matched and locked."
-    : state.mappingVisible || requiresMappingReview(state.mappings)
-      ? "If your CSV uses an unusual column name, match it above or leave optional fields as Not used."
-      : "";
-
-  return validation;
-}
-
-/** Validate mappings and return { ok, type, message }. */
-function getMappingValidationResult(mappings) {
-  const missingRequired = MAPPING_FIELDS.filter((f) => f.required && !mappings[f.key]);
-
-  if (missingRequired.length) {
+  if (missingByFile.length) {
     return {
       ok: false,
       type: "required",
-      message: "Choose Date, Transaction type, and Amount before generating your report.",
+      message: `We could not automatically match Date, Transaction type, and Amount for every file. ${formatMismatchMessage(missingByFile)} Use a standard Etsy export or remove the affected file.`,
     };
-  }
-
-  const mismatches = [];
-  state.uploadedFiles.forEach((file) => {
-    MAPPING_FIELDS.forEach((field) => {
-      const selected = mappings[field.key];
-      if (!selected) return;
-
-      const fileHasHeader = Boolean(findEquivalentHeader(file.headers, selected));
-
-      if (!fileHasHeader) {
-        mismatches.push(`${file.name}: ${field.label} — no matching column found.`);
-      }
-    });
-  });
-
-  if (mismatches.length) {
-    return { ok: false, type: "mismatch", message: formatMismatchMessage(mismatches) };
   }
 
   return {
     ok: true,
     type: "ok",
-    message: state.mappingLocked
-      ? "Required columns matched. This step is complete."
-      : requiresMappingReview(mappings)
-        ? "Required columns matched. One or more optional columns may need review above."
-        : "Required columns matched — you can generate your report whenever you're ready.",
+    message: "We matched the standard Etsy columns automatically. Generate your report whenever you're ready.",
   };
-}
-
-/** Render the mapping select dropdowns into the mappingGrid element. */
-function renderMappingFields(headers) {
-  mappingGrid.innerHTML = "";
-
-  MAPPING_FIELDS.forEach((field) => {
-    const wrapper = document.createElement("div");
-    wrapper.className = "field";
-
-    const label = document.createElement("label");
-    label.setAttribute("for", `mapping-${field.key}`);
-    label.textContent = field.required ? `${field.label} *` : field.label;
-
-    const note = document.createElement("small");
-    note.textContent = field.help;
-
-    const select = document.createElement("select");
-    select.id = `mapping-${field.key}`;
-    select.dataset.mappingKey = field.key;
-    select.disabled = state.mappingLocked;
-
-    const blankOption = document.createElement("option");
-    blankOption.value = "";
-    blankOption.textContent = field.required ? "Please choose a column" : "Not used";
-    select.appendChild(blankOption);
-
-    headers.forEach((header) => {
-      const option = document.createElement("option");
-      option.value = header;
-      option.textContent = header;
-      if (state.mappings[field.key] === header) option.selected = true;
-      select.appendChild(option);
-    });
-
-    select.addEventListener("change", () => {
-      state.mappingLocked = false;
-      updateMappingsFromInputs();
-      resetSummaryState();
-      refreshMappingValidationState();
-    });
-
-    wrapper.appendChild(label);
-    wrapper.appendChild(note);
-    wrapper.appendChild(select);
-    mappingGrid.appendChild(wrapper);
-  });
-}
-
-/** Sync the state.mappings object from current select values in the DOM. */
-function updateMappingsFromInputs() {
-  document.querySelectorAll("[data-mapping-key]").forEach((el) => {
-    state.mappings[el.dataset.mappingKey] = el.value;
-  });
 }
 
 /** Resolve mappings for a single file, falling back to per-file guesses if needed. */
@@ -2015,6 +1791,4 @@ document.addEventListener("visibilitychange", () => {
 
 updateUploadedFilesDisplay();
 updateProcessButtonState();
-updateWizardProgress();
-refreshMappingValidationState();
 setExtraCostsPanelOpen(false);

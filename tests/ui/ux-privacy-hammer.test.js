@@ -99,7 +99,7 @@ describe("UX, privacy, and security hammer tests", () => {
     expect(app.window.__fileXss).toBeUndefined();
   });
 
-  test("CSV header text is rendered safely inside mapping controls", async () => {
+  test("CSV header text stays inert during automatic column detection", async () => {
     app = loadApp();
 
     const maliciousHeader = '<img data-evil="header-name" src="x" onerror="window.__headerXss = true">';
@@ -110,10 +110,7 @@ describe("UX, privacy, and security hammer tests", () => {
 
     await app.hooks.handleSelectedFiles([createVirtualFile("malicious-headers.csv", csv)]);
 
-    const descriptionSelect = app.document.getElementById("mapping-description");
-    const optionTexts = Array.from(descriptionSelect.options).map((option) => option.textContent);
-
-    expect(optionTexts.some((text) => text.includes("data-evil") && text.includes("header-name"))).toBe(true);
+    expect(app.document.getElementById("processButton").disabled).toBe(false);
     expect(app.document.querySelector('[data-evil="header-name"]')).toBeNull();
     expect(app.window.__headerXss).toBeUndefined();
   });
@@ -215,7 +212,7 @@ describe("UX, privacy, and security hammer tests", () => {
     expect(app.document.getElementById("fileCount").textContent).toBe("0 of 15 CSVs");
     expect(app.document.getElementById("companyNameInput").value).toBe("");
     expect(app.document.getElementById("uploadedFilesWrap").classList.contains("hidden")).toBe(true);
-    expect(app.document.getElementById("mappingSection").classList.contains("hidden")).toBe(true);
+    expect(app.document.getElementById("processCard").classList.contains("hidden")).toBe(true);
     expect(app.document.getElementById("summarySection").classList.contains("hidden")).toBe(true);
     expect(app.document.getElementById("uploadSectionStatus").textContent).toBe("");
     expect(app.document.getElementById("statusMessage").textContent).toBe("");
